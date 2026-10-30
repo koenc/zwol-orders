@@ -144,6 +144,23 @@ class TestZwolOrdersApp(unittest.TestCase):
         start_background_scheduler()
         stop_background_scheduler()
 
+    def test_pwa_installability(self):
+        # Manifest
+        resp = self.client.get("/manifest.json")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data.get("display"), "standalone")
+        self.assertGreaterEqual(len(data.get("icons", [])), 2)
+
+        # Service Worker
+        resp_sw = self.client.get("/sw.js")
+        self.assertEqual(resp_sw.status_code, 200)
+        self.assertIn("Service-Worker-Allowed", resp_sw.headers)
+
+        # Icons
+        resp_icon = self.client.get("/static/img/icon-192.png")
+        self.assertEqual(resp_icon.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

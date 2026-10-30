@@ -1,7 +1,7 @@
 import datetime
 import json
 import logging
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, g
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, g, send_from_directory
 
 from app.config import Config
 from app.database import init_db, get_db
@@ -99,6 +99,18 @@ def logout():
 @app.route("/health")
 def health():
     return jsonify({"status": "healthy", "app": "zwol-orders", "timestamp": datetime.datetime.now().isoformat()})
+
+
+@app.route("/sw.js")
+def service_worker():
+    resp = send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+    resp.headers["Service-Worker-Allowed"] = "/"
+    return resp
+
+
+@app.route("/manifest.json")
+def root_manifest():
+    return send_from_directory(app.static_folder, "manifest.json", mimetype="application/manifest+json")
 
 
 # ==============================================================================

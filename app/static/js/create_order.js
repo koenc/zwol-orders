@@ -136,9 +136,10 @@ function handleCustomerInput(query) {
       let html = "";
       customers.forEach(c => {
         const address = [c.street, c.city].filter(Boolean).join(", ");
+        const groupTag = c.group_name ? `<span class="product-badge" style="background:#4a5568;font-size:0.75rem;padding:2px 6px;margin-left:6px;vertical-align:middle;">${escapeHtml(c.group_name)}</span>` : "";
         html += `
-          <div class="suggestion-item" onclick="selectCustomer('${c.customer_number}', '${escapeJs(c.name)}', '${escapeJs(c.contact_person || '')}', '${escapeJs(address)}')">
-            <span class="suggestion-name">${escapeHtml(c.name)}</span>
+          <div class="suggestion-item" onclick="selectCustomer('${c.customer_number}', '${escapeJs(c.name)}', '${escapeJs(c.contact_person || '')}', '${escapeJs(address)}', '${escapeJs(c.group_name || '')}')">
+            <span class="suggestion-name">${escapeHtml(c.name)} ${groupTag}</span>
             <span class="suggestion-details">${escapeHtml(address)} ${c.contact_person ? `(Contact: ${escapeHtml(c.contact_person)})` : ''}</span>
           </div>
         `;
@@ -152,7 +153,7 @@ function handleCustomerInput(query) {
   }, 220);
 }
 
-function selectCustomer(number, name, contact, address) {
+function selectCustomer(number, name, contact, address, groupName) {
   document.getElementById("selected-customer-number").value = number;
   document.getElementById("selected-customer-name").value = name;
   document.getElementById("customer-search").value = name;
@@ -164,7 +165,8 @@ function selectCustomer(number, name, contact, address) {
   // Toon badge
   const badge = document.getElementById("selected-customer-badge");
   document.getElementById("badge-name").textContent = name;
-  document.getElementById("badge-details").textContent = [address, contact].filter(Boolean).join(" • ");
+  const groupLabel = groupName ? `Groep: ${groupName}` : "";
+  document.getElementById("badge-details").textContent = [groupLabel, address, contact].filter(Boolean).join(" • ");
   badge.style.display = "flex";
 }
 

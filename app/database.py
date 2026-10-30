@@ -160,6 +160,7 @@ def init_db():
                 unit TEXT,
                 postal_code TEXT,
                 city TEXT,
+                group_name TEXT,
                 is_customer INTEGER DEFAULT 1,
                 updated_at TEXT
             )
@@ -226,6 +227,7 @@ def init_db():
                 `unit` VARCHAR(50) NULL,
                 `postal_code` VARCHAR(20) NULL,
                 `city` VARCHAR(100) NULL,
+                `group_name` VARCHAR(100) NULL,
                 `is_customer` TINYINT(1) DEFAULT 1,
                 `updated_at` DATETIME NULL,
                 PRIMARY KEY (`customer_number`),
@@ -290,5 +292,14 @@ def init_db():
                 INDEX `idx_sync_type` (`sync_type`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
+
+        # Migratie check: voeg group_name toe indien tabel al bestond zonder deze kolom
+        try:
+            if db.is_sqlite:
+                db.execute(f"ALTER TABLE {prefix}customers ADD COLUMN group_name TEXT;")
+            else:
+                db.execute(f"ALTER TABLE `{prefix}customers` ADD COLUMN `group_name` VARCHAR(100) NULL AFTER `city`;")
+        except Exception:
+            pass
 
     logger.info(f"Database tabellen met prefix '{prefix}' succesvol gecontroleerd/aangemaakt.")

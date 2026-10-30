@@ -184,6 +184,7 @@ class SilvasoftClient:
                 unit = (r.get("Address_Unit") or "").strip()
                 postal_code = (r.get("Address_PostalCode") or "").strip()
                 city = (r.get("Address_City") or "").strip()
+                group_name = (r.get("GroupName") or "").strip()
 
                 # Contactpersoon uit Relation_Contact halen indien aanwezig
                 contact_person = ""
@@ -203,17 +204,17 @@ class SilvasoftClient:
                     db.execute(f"""
                         UPDATE {prefix}customers
                         SET name = %s, contact_person = %s, email = %s, phone = %s,
-                            street = %s, unit = %s, postal_code = %s, city = %s,
+                            street = %s, unit = %s, postal_code = %s, city = %s, group_name = %s,
                             is_customer = 1, updated_at = %s
                         WHERE customer_number = %s
-                    """, (name, contact_person, email, phone, street, unit, postal_code, city, now_str, customer_number))
+                    """, (name, contact_person, email, phone, street, unit, postal_code, city, group_name, now_str, customer_number))
                 else:
                     db.execute(f"""
                         INSERT INTO {prefix}customers (
                             customer_number, name, contact_person, email, phone,
-                            street, unit, postal_code, city, is_customer, updated_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (customer_number, name, contact_person, email, phone, street, unit, postal_code, city, 1, now_str))
+                            street, unit, postal_code, city, group_name, is_customer, updated_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (customer_number, name, contact_person, email, phone, street, unit, postal_code, city, group_name, 1, now_str))
 
                 synced_count += 1
 
@@ -400,8 +401,6 @@ class SilvasoftClient:
                 "UseArticlePrice": True,
                 "UseArticleDescription": True
             }
-            if item.get("price") and float(item["price"]) > 0:
-                line_data["UnitPriceExclTax"] = float(item["price"])
             order_lines.append(line_data)
 
         if not order_lines:

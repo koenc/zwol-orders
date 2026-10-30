@@ -290,10 +290,12 @@ class SilvasoftClient:
             cust_rows = db.fetchall(f"SELECT customer_number, contact_person, phone FROM {prefix}customers")
             cust_map = {str(c["customer_number"]): (c.get("contact_person") or "", c.get("phone") or "") for c in cust_rows if c.get("customer_number")}
 
+            synced_order_numbers = []
             for o in all_orders:
                 order_number = str(o.get("OrderNumber") or 0)
                 if order_number == "0":
                     continue
+                synced_order_numbers.append(order_number)
 
                 status = (o.get("OrderStatus") or "Bevestigd").strip()
                 customer_number = str(o.get("CustomerNumber") or "")
@@ -383,6 +385,16 @@ class SilvasoftClient:
                           status, reference, products_summary, order_lines_json, now_str, now_str))
 
                 synced_count += 1
+
+            # Verwijder orders die lokaal op 'Bevestigd' staan, maar in Silvasoft zijn verwijderd of niet meer op 'Bevestigd' staan
+            if synced_order_numbers:
+                placeholders = ", ".join(["%s"] * len(synced_order_numbers))
+                db.execute(f"""
+                    DELETE FROM {prefix}orders 
+                    WHERE status = 'Bevestigd' AND order_number NOT IN ({placeholders})
+                """, tuple(synced_order_numbers))
+            else:
+                db.execute(f"DELETE FROM {prefix}orders WHERE status = 'Bevestigd'")
 
             # Log sync
             db.execute(f"""

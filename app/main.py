@@ -280,7 +280,7 @@ def api_force_sync():
     force = request.args.get("force") == "1"
     prefix = Config.DB_TABLE_PREFIX
 
-    # Cooldown check: niet vaker dan 1x per 10 minuten synchroniseren om ruim onder 15 req/u te blijven
+    # Cooldown check: minimaal 30 seconden tussen syncs om spam/dubbelklikken te voorkomen
     if not force:
         with get_db() as db:
             last_sync = db.fetchone(f"""
@@ -291,13 +291,13 @@ def api_force_sync():
             if last_sync and last_sync.get("created_at"):
                 try:
                     c_time = datetime.datetime.strptime(str(last_sync["created_at"]), "%Y-%m-%d %H:%M:%S")
-                    diff_mins = (datetime.datetime.now() - c_time).total_seconds() / 60.0
-                    if diff_mins < 10.0:
-                        wait_mins = max(1, int(10.0 - diff_mins))
+                    diff_secs = (datetime.datetime.now() - c_time).total_seconds()
+                    if diff_secs < 30.0:
+                        wait_secs = max(1, int(30.0 - diff_secs))
                         return jsonify({
                             "success": True,
                             "skipped": True,
-                            "message": f"Gegevens zijn recent bijgewerkt ({int(diff_mins)} min geleden). Om binnen het gratis Silvasoft limiet (15 req/uur) te blijven, kan over {wait_mins} min weer gesynchroniseerd worden."
+                            "message": f"Data is zojuist al gesynchroniseerd ({int(diff_secs)}s geleden). Wacht nog {wait_secs}s voor een nieuwe sync."
                         })
                 except Exception:
                     pass

@@ -117,7 +117,7 @@ async function triggerSync() {
   showToast("Synchroniseren met Silvasoft...", "info", 2000);
 
   try {
-    const res = await fetch("/api/sync", { method: "POST" });
+    const res = await fetch("/api/sync?force=1", { method: "POST" });
     const data = await res.json();
     if (data.success) {
       if (data.skipped) {

@@ -135,6 +135,11 @@ class TestZwolOrdersApp(unittest.TestCase):
         resp = self.client.post("/api/orders", json={"customer_name": "Test Klant", "items": []})
         self.assertEqual(resp.status_code, 400)
 
+    def test_scheduler_lifecycle(self):
+        from app.scheduler import start_background_scheduler, stop_background_scheduler
+        start_background_scheduler()
+        stop_background_scheduler()
+
 
 if __name__ == "__main__":
     unittest.main()

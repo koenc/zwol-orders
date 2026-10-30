@@ -315,8 +315,11 @@ def seed_database_if_empty():
 try:
     init_db()
     seed_database_if_empty()
+    if not app.config.get("TESTING"):
+        from app.scheduler import start_background_scheduler
+        start_background_scheduler()
 except Exception as e:
-    logger.error(f"Fout bij database initialisatie: {e}")
+    logger.error(f"Fout bij applicatie initialisatie: {e}")
 
 
 if __name__ == "__main__":

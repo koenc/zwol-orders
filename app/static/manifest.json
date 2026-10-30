@@ -1,0 +1,18 @@
+{
+  "name": "ZWOL Orders",
+  "short_name": "ZWOL Orders",
+  "description": "Mobiele orderbeheer app voor Westlandse Bierbrouwerij ZWOL",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e4a2a",
+  "theme_color": "#0e4a2a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/img/ZWOL Logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

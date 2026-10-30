@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  zwol-orders:
+    build: .
+    container_name: zwol-orders
+    restart: unless-stopped
+    network_mode: "host"
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Amsterdam
+    volumes:
+      - .:/app
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-zwol-orders
+    restart: unless-stopped
+    network_mode: "host"
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}

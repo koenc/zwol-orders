@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Nieuwe Order Invoeren{% endblock %}
+
+{% block content %}
+<div class="create-card">
+  <h1 style="font-size: 1.35rem; margin-bottom: 16px;">Nieuwe Bierorder Invoeren</h1>
+
+  <form id="order-form" onsubmit="submitNewOrder(event)">
+    <!-- 1. Klant Selecteren -->
+    <div class="form-group">
+      <label class="form-label" for="customer-search">Klant / Horeca Relatie</label>
+      <div class="autocomplete-wrapper">
+        <input 
+          type="text" 
+          id="customer-search" 
+          class="form-control" 
+          placeholder="Typ bedrijfsnaam of plaats..." 
+          autocomplete="off"
+          oninput="handleCustomerInput(this.value)"
+          required
+        >
+        <input type="hidden" id="selected-customer-number" name="customer_number">
+        <input type="hidden" id="selected-customer-name" name="customer_name">
+        <div id="customer-suggestions" class="suggestions-dropdown"></div>
+      </div>
+      <div id="selected-customer-badge" class="selected-customer-pill">
+        <div>
+          <strong id="badge-name">-</strong>
+          <div id="badge-details" style="font-size: 0.75rem; color: #555;">-</div>
+        </div>
+        <button type="button" class="btn-icon" style="width:28px;height:28px;font-size:0.8rem;background:#ddd;color:#333;border:none;" onclick="clearSelectedCustomer()">✕</button>
+      </div>
+    </div>
+
+    <!-- 2. Datums & Referentie -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="form-group">
+        <label class="form-label" for="order-date">Orderdatum</label>
+        <input type="date" id="order-date" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="delivery-date">Leverdatum</label>
+        <input type="date" id="delivery-date" class="form-control" onchange="handleDeliveryDateChange(this.value)" required>
+      </div>
+    </div>
+
+    <!-- Quick Date Chips -->
+    <div class="date-chips">
+      <button type="button" class="chip-btn" onclick="setQuickDate('today')">Vandaag</button>
+      <button type="button" class="chip-btn" onclick="setQuickDate('tomorrow')">Morgen</button>
+      <button type="button" class="chip-btn" onclick="setQuickDate('friday')">A.s. Vrijdag</button>
+      <button type="button" class="chip-btn" onclick="setQuickDate('next_week')">Volgende Week</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;">
+      <div class="form-group">
+        <label class="form-label" for="reference">Referentie</label>
+        <input type="text" id="reference" class="form-control" placeholder="Levering DD-MM-YYYY" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="order-status">Order Status</label>
+        <input type="text" id="order-status" class="form-control" value="Bevestigd" readonly style="background:#f4f1ec; cursor:not-allowed;">
+      </div>
+    </div>
+
+    <!-- 3. Producten & Aantallen -->
+    <div style="margin-top: 24px; margin-bottom: 24px;">
+      <div class="section-title">
+        <span>🍺</span> ZWOL Bieren & Artikelen
+      </div>
+      <p style="font-size: 0.85rem; color: var(--zwol-text-muted); margin-bottom: 12px;">
+        Gebruik de <strong>-</strong> en <strong>+</strong> knoppen om de gewenste aantallen in te voeren.
+      </p>
+
+      <div id="products-container" class="products-list">
+        <div class="empty-state">
+          <p>Producten laden uit Silvasoft...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Samenvatting & Opslaan Knop -->
+    <div style="margin-top: 24px; position: sticky; bottom: 80px; z-index: 50;">
+      <button type="submit" id="btn-submit-order" class="btn-primary-action">
+        <span>🛒</span>
+        <span id="btn-submit-label">Order Opslaan in Silvasoft</span>
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/create_order.js') }}"></script>
+{% endblock %}

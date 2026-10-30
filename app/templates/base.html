@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>{% block title %}ZWOL Orders{% endblock %} | Westlandse Bierbrouwerij ZWOL</title>
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0e4a2a">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/ZWOL Logo.svg') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/ZWOL Logo.svg') }}">
+
+  <!-- Huisstijl CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Sticky Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="{{ url_for('board') }}" class="brand-wrapper">
+        <img src="{{ url_for('static', filename='img/ZWOL Logo.svg') }}" alt="Bierbrouwerij ZWOL" class="brand-logo">
+        <div class="brand-title">
+          ZWOL ORDERS
+          <span>Bierbrouwerij</span>
+        </div>
+      </a>
+      <div class="header-actions">
+        <button id="btn-sync" class="btn-icon" title="Synchroniseer met Silvasoft" onclick="triggerSync()">
+          🔄
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast notificaties container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Inhoud van de pagina -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Vaste Mobiele Navigatiebalk Onderin -->
+  <nav class="bottom-nav">
+    <a href="{{ url_for('board') }}" class="nav-item {% if request.endpoint == 'board' %}active{% endif %}">
+      <span class="nav-icon">📋</span>
+      <span>Orders Bord</span>
+    </a>
+    <a href="{{ url_for('create_order_page') }}" class="nav-item {% if request.endpoint == 'create_order_page' %}active{% endif %}">
+      <span class="nav-icon">➕</span>
+      <span>Nieuwe Order</span>
+    </a>
+  </nav>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

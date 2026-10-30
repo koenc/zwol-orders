@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Orders Bord{% endblock %}
+
+{% block content %}
+<div class="board-header">
+  <div>
+    <h1 class="board-title">Leveroverzicht</h1>
+    <p class="board-subtitle">Orders met status <strong>Bevestigd</strong> per week</p>
+  </div>
+</div>
+
+<!-- Horizontaal scrollend Trello/Kanban bord -->
+<div id="kanban-wrapper" class="kanban-scroll-wrapper">
+  <!-- Dynamisch gevuld via board.js -->
+  <div class="empty-state" style="width: 100%;">
+    <div class="empty-state-icon">⏳</div>
+    <h3>Orders laden vanuit Silvasoft...</h3>
+  </div>
+</div>
+
+<!-- Bottom Sheet / Modal voor Order Detail (Screen 2b) -->
+<div id="order-modal" class="modal-backdrop" onclick="closeOrderModal(event)">
+  <div class="bottom-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    
+    <div class="sheet-header">
+      <div>
+        <h2 id="modal-customer-name" class="sheet-title">-</h2>
+        <p id="modal-order-number" class="sheet-subtitle">Order #-</p>
+      </div>
+      <button class="btn-icon" style="background:#f0ede8; color:#333; border:none;" onclick="closeOrderModal()">✕</button>
+    </div>
+
+    <!-- Contact & Adres Kaart met 1-tap knoppen -->
+    <div class="contact-box">
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>👤</span>
+          <strong id="modal-contact-person">-</strong>
+        </div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>📍</span>
+          <span id="modal-address">-</span>
+        </div>
+        <a id="btn-navigate" href="#" target="_blank" class="action-pill action-pill-nav">
+          🗺️ Navigeer
+        </a>
+      </div>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>📞</span>
+          <span id="modal-phone">-</span>
+        </div>
+        <a id="btn-call" href="#" class="action-pill action-pill-call">
+          📞 Bellen
+        </a>
+      </div>
+    </div>
+
+    <!-- Details datum & referentie -->
+    <div style="margin-bottom: 16px; font-size: 0.88rem; color: var(--zwol-text-muted); display:flex; justify-content:space-between;">
+      <div>Leverdatum: <strong id="modal-delivery-date" style="color:var(--zwol-green);">-</strong></div>
+      <div>Referentie: <strong id="modal-reference">-</strong></div>
+    </div>
+
+    <!-- Uitgebreide artikelen specificatie -->
+    <div class="items-breakdown">
+      <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Bestelde Bieren & Artikelen</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            <th style="text-align: right; width: 80px;">Aantal</th>
+          </tr>
+        </thead>
+        <tbody id="modal-items-tbody">
+          <!-- Dynamisch -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Grote Actieknop: Markeer als Geleverd -->
+    <button id="btn-mark-delivered" class="btn-deliver" onclick="confirmDeliverOrder()">
+      <span>✅</span> Markeer als Geleverd
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/board.js') }}"></script>
+{% endblock %}

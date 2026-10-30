@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inloggen | ZWOL Orders</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/ZWOL Logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      min-height: 100vh;
+      background: radial-gradient(circle at center, #166e3f 0%, #0e4a2a 70%, #082d19 100%);
+    }
+    .login-box {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+    .login-logo {
+      height: 80px;
+      margin-bottom: 16px;
+    }
+    .login-title {
+      font-size: 1.45rem;
+      margin-bottom: 6px;
+      color: var(--zwol-green);
+    }
+    .login-desc {
+      font-size: 0.9rem;
+      color: var(--zwol-text-muted);
+      margin-bottom: 24px;
+    }
+    .btn-m365 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #0078d4;
+      color: #ffffff;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .btn-m365:active {
+      background: #005a9e;
+      transform: translateY(1px);
+    }
+    .m365-icon {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='img/ZWOL Logo.svg') }}" alt="Westlandse Bierbrouwerij ZWOL" class="login-logo">
+    <h1 class="login-title">ZWOL ORDERS</h1>
+    <p class="login-desc">Meld je aan met je <strong>@brouwerijzwol.nl</strong> Microsoft 365 account om toegang te krijgen.</p>
+
+    {% if error %}
+    <div style="background: #fde8e8; border-left: 4px solid var(--zwol-danger); padding: 10px; margin-bottom: 16px; font-size: 0.85rem; color: #9b1c1c; text-align: left;">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login_post') }}">
+      <div class="form-group" style="text-align: left;">
+        <label class="form-label" for="email">E-mailadres</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="naam@brouwerijzwol.nl" required autofocus>
+      </div>
+      <button type="submit" class="btn-primary-action" style="margin-top: 10px;">
+        <span>🔐</span> Inloggen
+      </button>
+    </form>
+    
+    <div style="margin-top: 24px; font-size: 0.75rem; color: #888;">
+      Beveiligd via Cloudflare Zero Trust & Microsoft 365
+    </div>
+  </div>
+
+</body>
+</html>

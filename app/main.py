@@ -107,21 +107,10 @@ def health():
 @app.route("/api/orders", methods=["GET"])
 @login_required
 def api_get_orders():
-    """Haalt alle orders op met status 'Bevestigd', gegroepeerd per week."""
+    """Haalt alle orders op met status 'Bevestigd', gegroepeerd per week (100% uit lokale database)."""
     prefix = Config.DB_TABLE_PREFIX
 
     with get_db() as db:
-        # Alleen initiële sync uitvoeren als er nog NOOIT gesynchroniseerd is
-        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'orders' LIMIT 1")
-        if not last_sync:
-            try:
-                silvasoft_client.sync_orders()
-            except Exception as e:
-                logger.warning(f"Initiële order sync fout: {e}")
-                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
-                           ("orders", "error", 0, str(e)[:250], now_str))
-
         # Haal orders op met status Bevestigd
         query = f"""
             SELECT * FROM {prefix}orders
@@ -198,20 +187,9 @@ def api_deliver_order(order_number):
 @app.route("/api/products", methods=["GET"])
 @login_required
 def api_get_products():
-    """Haalt alle bieren/artikelen op die in de app getoond mogen worden."""
+    """Haalt alle bieren/artikelen op die in de app getoond mogen worden (100% uit lokale database)."""
     prefix = Config.DB_TABLE_PREFIX
     with get_db() as db:
-        # Alleen synchroniseren als er nog nooit een sync in het logboek staat
-        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'products' LIMIT 1")
-        if not last_sync:
-            try:
-                silvasoft_client.sync_products()
-            except Exception as e:
-                logger.warning(f"Initiële product sync fout: {e}")
-                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
-                           ("products", "error", 0, str(e)[:250], now_str))
-
         rows = db.fetchall(f"""
             SELECT article_number, name, short_name, category, price, vat_percentage, unit
             FROM {prefix}products
@@ -225,24 +203,11 @@ def api_get_products():
 @app.route("/api/customers", methods=["GET"])
 @login_required
 def api_search_customers():
-    """Zoekt klanten op bedrijfsnaam of plaats voor autocomplete."""
+    """Zoekt klanten op bedrijfsnaam of plaats voor autocomplete (100% uit lokale database)."""
     q = (request.args.get("q") or "").strip()
     prefix = Config.DB_TABLE_PREFIX
 
     with get_db() as db:
-        # Alleen synchroniseren als de klantentabel volledig leeg is én er nog nooit gesynchroniseerd is
-        cust_cnt = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}customers")
-        if not cust_cnt or (cust_cnt.get("cnt") or 0) == 0:
-            last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'customers' LIMIT 1")
-            if not last_sync:
-                try:
-                    silvasoft_client.sync_customers()
-                except Exception as e:
-                    logger.warning(f"Initiële klanten sync fout: {e}")
-                    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
-                               ("customers", "error", 0, str(e)[:250], now_str))
-
         if not q:
             rows = db.fetchall(f"SELECT * FROM {prefix}customers WHERE is_customer = 1 ORDER BY name ASC LIMIT 20")
         else:
@@ -292,7 +257,32 @@ def api_create_order():
 @app.route("/api/sync", methods=["POST"])
 @login_required
 def api_force_sync():
-    """Voert een volledige handmatige synchronisatie uit met Silvasoft."""
+    """Voert een synchronisatie uit met Silvasoft met bescherming tegen het 15 req/uur API-limiet."""
+    force = request.args.get("force") == "1"
+    prefix = Config.DB_TABLE_PREFIX
+
+    # Cooldown check: niet vaker dan 1x per 10 minuten synchroniseren om ruim onder 15 req/u te blijven
+    if not force:
+        with get_db() as db:
+            last_sync = db.fetchone(f"""
+                SELECT created_at FROM {prefix}sync_log 
+                WHERE status = 'success' 
+                ORDER BY id DESC LIMIT 1
+            """)
+            if last_sync and last_sync.get("created_at"):
+                try:
+                    c_time = datetime.datetime.strptime(str(last_sync["created_at"]), "%Y-%m-%d %H:%M:%S")
+                    diff_mins = (datetime.datetime.now() - c_time).total_seconds() / 60.0
+                    if diff_mins < 10.0:
+                        wait_mins = max(1, int(10.0 - diff_mins))
+                        return jsonify({
+                            "success": True,
+                            "skipped": True,
+                            "message": f"Gegevens zijn recent bijgewerkt ({int(diff_mins)} min geleden). Om binnen het gratis Silvasoft limiet (15 req/uur) te blijven, kan over {wait_mins} min weer gesynchroniseerd worden."
+                        })
+                except Exception:
+                    pass
+
     try:
         p_count = silvasoft_client.sync_products()
         c_count = silvasoft_client.sync_customers()
@@ -304,11 +294,27 @@ def api_force_sync():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+def seed_database_if_empty():
+    """Vult eenmalig de database bij eerste installatie als deze nog leeg is."""
+    prefix = Config.DB_TABLE_PREFIX
+    try:
+        with get_db() as db:
+            p_cnt = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}products")
+            if not p_cnt or (p_cnt.get("cnt") or 0) == 0:
+                logger.info("Database is nog leeg. Eenmalige initiële synchronisatie starten...")
+                silvasoft_client.sync_products()
+                silvasoft_client.sync_customers()
+                silvasoft_client.sync_orders()
+    except Exception as e:
+        logger.warning(f"Initiële sync bij opstart overgeslagen/vertraagd: {e}")
+
+
 # ==============================================================================
 # Applicatie Initialisatie
 # ==============================================================================
 try:
     init_db()
+    seed_database_if_empty()
 except Exception as e:
     logger.error(f"Fout bij database initialisatie: {e}")
 

@@ -36,7 +36,11 @@ async function triggerSync() {
     const res = await fetch("/api/sync", { method: "POST" });
     const data = await res.json();
     if (data.success) {
-      showToast(`✅ Gesynchroniseerd! ${data.message || ""}`, "success");
+      if (data.skipped) {
+        showToast(`ℹ️ ${data.message || ""}`, "info", 5000);
+      } else {
+        showToast(`✅ Gesynchroniseerd! ${data.message || ""}`, "success");
+      }
       // Herlaad bord of producten indien de functie bestaat
       if (typeof loadOrdersBoard === "function") {
         loadOrdersBoard();

@@ -504,12 +504,6 @@ class SilvasoftClient:
         except Exception as e:
             logger.error(f"Fout bij direct lokaal opslaan van order #{new_order_number}: {e}")
 
-        # Optionele achtergrond sync van overige orders
-        try:
-            self.sync_orders()
-        except Exception as e:
-            logger.warning(f"Achtergrond sync na order creatie overgeslagen: {e}")
-
         return {
             "success": True,
             "order_number": new_order_number,

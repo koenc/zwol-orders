@@ -314,7 +314,7 @@ class SilvasoftClient:
                 # Weeknummer en jaar berekenen
                 d_week, d_year = self._parse_week_and_year(delivery_date)
 
-                # Producten samenvatting (bijv. "1x ZS, 3x BM, 2x OG")
+                # Producten samenvatting (bijv. "1xZS, 3xBM, 2xOG")
                 summary_parts = []
                 for line in order_lines:
                     qty = int(float(line.get("Quantity") or 0))
@@ -322,13 +322,16 @@ class SilvasoftClient:
                         continue
                     p_num = str(line.get("ProductNumber") or "").strip()
                     desc = (line.get("Description") or "").strip()
-                    short = product_short_map.get(p_num) or product_short_map.get(desc.lower())
-                    if not short and desc:
-                        # Fallback afkorting: eerste letters
-                        words = desc.split()
-                        short = "".join(w[0].upper() for w in words[:2])
-                    label = short if short else desc
-                    summary_parts.append(f"{qty}x {label}")
+                    short = (product_short_map.get(p_num) or product_short_map.get(desc.lower()) or "").strip()
+                    if short:
+                        label = short
+                    elif desc:
+                        label = desc[:50].strip()
+                    elif p_num:
+                        label = p_num[:50].strip()
+                    else:
+                        label = "Artikel"
+                    summary_parts.append(f"{qty}x{label}")
 
                 products_summary = ", ".join(summary_parts) if summary_parts else "Geen artikelen"
 
@@ -479,13 +482,20 @@ class SilvasoftClient:
                 contact_person = f"{c_first} {c_last}".strip()
                 phone = str(fc.get("Phone") or "").strip()
 
-        # Samenvatting bieren bouwen (bijv. "2x OG")
+        # Samenvatting bieren bouwen (bijv. "2xOG")
         summary_parts = []
         for it in items:
             q = int(it.get("quantity") or 0)
             if q > 0:
-                s_name = it.get("short_name") or it.get("name") or "Bier"
-                summary_parts.append(f"{q}x {s_name}")
+                short = (it.get("short_name") or "").strip()
+                name = (it.get("name") or "").strip()
+                if short:
+                    label = short
+                elif name:
+                    label = name[:50].strip()
+                else:
+                    label = "Bier"
+                summary_parts.append(f"{q}x{label}")
         products_summary = ", ".join(summary_parts) if summary_parts else "Bier order"
 
         # Direct lokaal opslaan in de database zodat de order ALTIJD direct op het bord staat

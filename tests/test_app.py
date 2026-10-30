@@ -62,7 +62,7 @@ class TestZwolOrdersApp(unittest.TestCase):
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, ("TEST_ORDER_999", "TEST_1", "Café Het Bruine Paard", "Jan de Vries", "0612345678",
                   "Markt", "10", "2671AA", "Naaldwijk", "30-10-2026", "31-10-2026", 44, 2026,
-                  "Bevestigd", "Levering 31-10-2026", "2x ZS, 1x BM",
+                  "Bevestigd", "Levering 31-10-2026", "2xZS, 1xBM",
                   json.dumps([{"Description": "Zuipschuit 33cl 24 stuks", "Quantity": 2}, {"Description": "Barre Mannen 33cl 24 stuks", "Quantity": 1}]),
                   now_str, now_str))
 

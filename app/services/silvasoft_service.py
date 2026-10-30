@@ -53,7 +53,25 @@ class SilvasoftClient:
 
                 if resp.status_code not in (200, 201):
                     logger.error(f"Silvasoft API fout ({method} {endpoint} HTTP {resp.status_code}): {resp.text}")
-                    raise RuntimeError(f"Silvasoft API fout ({resp.status_code}): {resp.text[:200]}")
+                    err_msg = resp.text
+                    try:
+                        err_json = resp.json()
+                        if isinstance(err_json, dict):
+                            msg = err_json.get("errorMessage") or err_json.get("message")
+                            details = err_json.get("Details") or err_json.get("details")
+                            code = err_json.get("errorCode") or err_json.get("code")
+                            parts = []
+                            if msg:
+                                parts.append(str(msg).strip())
+                            if details and str(details).strip() not in (str(msg).strip(), ""):
+                                parts.append(f"Details: {str(details).strip()}")
+                            if code:
+                                parts.append(f"Code: {code}")
+                            if parts:
+                                err_msg = " — ".join(parts)
+                    except Exception:
+                        pass
+                    raise RuntimeError(f"Silvasoft API fout ({resp.status_code}): {err_msg}")
 
                 return resp.json()
             except requests.exceptions.RequestException as e:

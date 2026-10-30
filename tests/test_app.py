@@ -1,8 +1,15 @@
 import unittest
 import json
 import datetime
-from app.main import app, format_dutch_date, get_week_label
+
+import app.database as db_mod
+db_mod._USE_SQLITE = True
+
 from app.config import Config
+Config.DB_HOST = None
+Config.AUTH_BYPASS_FOR_DEV = True
+
+from app.main import app, format_dutch_date, get_week_label
 from app.database import get_db, init_db
 from app.services.silvasoft_service import silvasoft_client
 
@@ -10,9 +17,6 @@ from app.services.silvasoft_service import silvasoft_client
 class TestZwolOrdersApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        import app.database as db_mod
-        db_mod._USE_SQLITE = True
-        Config.AUTH_BYPASS_FOR_DEV = True
         app.config["TESTING"] = True
         app.config["SECRET_KEY"] = "test-secret-key"
         init_db()

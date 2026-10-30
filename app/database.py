@@ -13,6 +13,8 @@ _USE_SQLITE = False
 def check_mariadb_connection():
     """Controleert of MariaDB bereikbaar is, anders schakelen we over op SQLite."""
     global _USE_SQLITE
+    if _USE_SQLITE:
+        return False
     if not Config.DB_HOST:
         _USE_SQLITE = True
         return False

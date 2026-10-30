@@ -198,6 +198,8 @@ h1, h2, h3, h4, .brand-font {
   flex-direction: column;
   gap: 8px;
   pointer-events: none;
+  max-width: 650px;
+  margin: 0 auto;
 }
 
 .toast {
@@ -209,9 +211,13 @@ h1, h2, h3, h4, .brand-font {
   box-shadow: var(--shadow-lg);
   font-size: 0.92rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   animation: slideDown 0.2s ease-out;
+  user-select: text;
+  -webkit-user-select: text;
+  word-break: break-word;
 }
 
 .toast.toast-success {
@@ -220,6 +226,62 @@ h1, h2, h3, h4, .brand-font {
 
 .toast.toast-error {
   border-left-color: var(--zwol-danger);
+  background: #fff8f8;
+  color: #721c24;
+}
+
+.toast.toast-info {
+  border-left-color: var(--zwol-gold);
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.45;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-copy-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #2d3748;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toast-copy-btn:hover {
+  background: #edf2f7;
+  border-color: #a0aec0;
+}
+
+.toast-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #718096;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.toast-close-btn:hover {
+  color: #1a202c;
 }
 
 @keyframes slideDown {

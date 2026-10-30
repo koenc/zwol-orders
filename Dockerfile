@@ -23,11 +23,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Poort vrijgeven
-EXPOSE 8503
+EXPOSE 8504
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl --fail http://localhost:8503/health || exit 1
+    CMD curl --fail http://localhost:8504/health || exit 1
 
 # Start gunicorn productieserver
-CMD ["gunicorn", "--bind", "0.0.0.0:8503", "--workers", "2", "--threads", "4", "app.main:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8504", "--workers", "2", "--threads", "4", "app.main:app"]

@@ -13,9 +13,12 @@ services:
     volumes:
       - .:/app
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared-zwol-orders
-    restart: unless-stopped
-    network_mode: "host"
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+  # Optioneel: Alleen nodig als je een aparte tunnel wilt.
+  # Omdat je de bestaande 'synology-ketelhuis' tunnel gebruikt op poort 8504,
+  # hoeft deze container niet te draaien!
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: cloudflared-zwol-orders
+  #   restart: unless-stopped
+  #   network_mode: "host"
+  #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}

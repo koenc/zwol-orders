@@ -8,7 +8,7 @@ class Config:
     BASE_DIR = BASE_DIR
     FLASK_ENV = "production"
     SECRET_KEY = "zwol-orders-default-secret-key-2026"
-    PORT = 8503
+    PORT = 8504
 
     # Database
     DB_HOST = "127.0.0.1"

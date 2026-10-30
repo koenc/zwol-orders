@@ -113,6 +113,13 @@ def root_manifest():
     return send_from_directory(app.static_folder, "manifest.json", mimetype="application/manifest+json")
 
 
+@app.after_request
+def add_pwa_headers(response):
+    if request.path.endswith("sw.js"):
+        response.headers["Service-Worker-Allowed"] = "/"
+    return response
+
+
 # ==============================================================================
 # API Routes (JSON)
 # ==============================================================================

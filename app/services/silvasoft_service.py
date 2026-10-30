@@ -145,11 +145,16 @@ class SilvasoftClient:
         all_relations = []
 
         while True:
-            data = self._request("GET", "listrelations/", params={"offset": offset, "limit": limit})
+            params = {
+                "relationtype": "Customer",
+                "offset": offset,
+                "limit": limit
+            }
+            data = self._request("GET", "listrelations/", params=params)
             if not isinstance(data, list) or len(data) == 0:
                 break
             all_relations.extend(data)
-            if len(data) < limit:
+            if len(data) < limit or len(all_relations) >= 500:
                 break
             offset += limit
 
@@ -236,11 +241,17 @@ class SilvasoftClient:
                     product_short_map[p["name"].strip().lower()] = p.get("short_name") or ""
 
         offset = 0
-        limit = 100
+        limit = 50
         all_orders = []
 
+        # Filter DIRECT op 'OrderStatus=Bevestigd' om te voorkomen dat duizenden oude orders worden opgehaald!
         while True:
-            data = self._request("GET", "listorders/", params={"offset": offset, "limit": limit})
+            params = {
+                "OrderStatus": "Bevestigd",
+                "offset": offset,
+                "limit": limit
+            }
+            data = self._request("GET", "listorders/", params=params)
             if not isinstance(data, list) or len(data) == 0:
                 break
             all_orders.extend(data)
@@ -252,6 +263,10 @@ class SilvasoftClient:
         synced_count = 0
 
         with get_db() as db:
+            # Batch map voor directe contactpersoon & telefoon lookup zonder losse SQL queries
+            cust_rows = db.fetchall(f"SELECT customer_number, contact_person, phone FROM {prefix}customers")
+            cust_map = {str(c["customer_number"]): (c.get("contact_person") or "", c.get("phone") or "") for c in cust_rows if c.get("customer_number")}
+
             for o in all_orders:
                 order_number = str(o.get("OrderNumber") or 0)
                 if order_number == "0":
@@ -312,13 +327,9 @@ class SilvasoftClient:
                     city = (first.get("Address_City") or "").strip()
 
                 # Telefoon en contactpersoon opzoeken in customers cache
-                contact_person = ""
-                phone = ""
-                if customer_number:
-                    cust = db.fetchone(f"SELECT contact_person, phone FROM {prefix}customers WHERE customer_number = %s", (customer_number,))
-                    if cust:
-                        contact_person = cust.get("contact_person") or ""
-                        phone = cust.get("phone") or ""
+                contact_info = cust_map.get(customer_number, ("", ""))
+                contact_person = contact_info[0]
+                phone = contact_info[1]
 
                 order_lines_json = json.dumps(order_lines)
 

@@ -61,6 +61,12 @@ class TestZwolOrdersApp(unittest.TestCase):
                   json.dumps([{"Description": "Zuipschuit 33cl 24 stuks", "Quantity": 2}, {"Description": "Barre Mannen 33cl 24 stuks", "Quantity": 1}]),
                   now_str, now_str))
 
+            # Mock sync log om netwerk calls tijdens tests te voorkomen
+            db.execute(f"DELETE FROM {prefix}sync_log")
+            db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES ('orders', 'success', 1, 'mock', '{now_str}')")
+            db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES ('products', 'success', 2, 'mock', '{now_str}')")
+            db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES ('customers', 'success', 1, 'mock', '{now_str}')")
+
     def test_health_endpoint(self):
         resp = self.client.get("/health")
         self.assertEqual(resp.status_code, 200)

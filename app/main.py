@@ -111,9 +111,9 @@ def api_get_orders():
     prefix = Config.DB_TABLE_PREFIX
 
     with get_db() as db:
-        # Controleer of er al orders zijn; zo niet, doe een eerste sync
-        count_res = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}orders")
-        if count_res and count_res.get("cnt") == 0:
+        # Alleen initiële sync uitvoeren als er nog NOOIT gesynchroniseerd is
+        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'orders' LIMIT 1")
+        if not last_sync:
             try:
                 silvasoft_client.sync_orders()
             except Exception as e:
@@ -198,9 +198,9 @@ def api_get_products():
     """Haalt alle bieren/artikelen op die in de app getoond mogen worden."""
     prefix = Config.DB_TABLE_PREFIX
     with get_db() as db:
-        # Check of producten al gesynchroniseerd zijn
-        count_res = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}products WHERE show_in_order_app = 1")
-        if count_res and count_res.get("cnt") == 0:
+        # Alleen synchroniseren als er nog nooit een sync in het logboek staat
+        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'products' LIMIT 1")
+        if not last_sync:
             try:
                 silvasoft_client.sync_products()
             except Exception as e:
@@ -224,8 +224,8 @@ def api_search_customers():
     prefix = Config.DB_TABLE_PREFIX
 
     with get_db() as db:
-        count_res = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}customers")
-        if count_res and count_res.get("cnt") == 0:
+        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'customers' LIMIT 1")
+        if not last_sync:
             try:
                 silvasoft_client.sync_customers()
             except Exception as e:

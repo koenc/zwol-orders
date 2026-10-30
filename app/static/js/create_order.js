@@ -345,7 +345,8 @@ async function submitNewOrder(e) {
 
     const data = await res.json();
     if (data.success) {
-      showToast(`🍻 Order succesvol aangemaakt in Silvasoft!`, "success");
+      const numStr = data.order_number ? ` #${data.order_number}` : "";
+      showToast(`🍻 Order${numStr} succesvol aangemaakt in Silvasoft!`, "success");
       // Direct doorsturen naar het orders bord
       setTimeout(() => {
         window.location.href = "/";

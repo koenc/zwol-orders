@@ -4,6 +4,7 @@ import datetime
 from app.main import app, format_dutch_date, get_week_label
 from app.config import Config
 from app.database import get_db, init_db
+from app.services.silvasoft_service import silvasoft_client
 
 
 class TestZwolOrdersApp(unittest.TestCase):
@@ -119,6 +120,20 @@ class TestZwolOrdersApp(unittest.TestCase):
         self.assertTrue(formatted.endswith("okt"))
         week_label = get_week_label(2026, 44)
         self.assertTrue(len(week_label) > 0)
+        # Test 2-part and 3-part conversion
+        self.assertEqual(silvasoft_client._format_nl_date("2026-11-04"), "04-11-2026")
+        self.assertTrue(silvasoft_client._format_nl_date("04-11").startswith("04-11-"))
+        week, year = silvasoft_client._parse_week_and_year("04-11-2026")
+        self.assertEqual(week, 45)
+        self.assertEqual(year, 2026)
+
+    def test_api_create_order_validation(self):
+        # Missing customer name
+        resp = self.client.post("/api/orders", json={"items": [{"article_number": "123", "quantity": 1}]})
+        self.assertEqual(resp.status_code, 400)
+        # Missing items
+        resp = self.client.post("/api/orders", json={"customer_name": "Test Klant", "items": []})
+        self.assertEqual(resp.status_code, 400)
 
 
 if __name__ == "__main__":

@@ -118,6 +118,9 @@ def api_get_orders():
                 silvasoft_client.sync_orders()
             except Exception as e:
                 logger.warning(f"Initiële order sync fout: {e}")
+                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
+                           ("orders", "error", 0, str(e)[:250], now_str))
 
         # Haal orders op met status Bevestigd
         query = f"""
@@ -205,6 +208,9 @@ def api_get_products():
                 silvasoft_client.sync_products()
             except Exception as e:
                 logger.warning(f"Initiële product sync fout: {e}")
+                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
+                           ("products", "error", 0, str(e)[:250], now_str))
 
         rows = db.fetchall(f"""
             SELECT article_number, name, short_name, category, price, vat_percentage, unit
@@ -224,12 +230,18 @@ def api_search_customers():
     prefix = Config.DB_TABLE_PREFIX
 
     with get_db() as db:
-        last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'customers' LIMIT 1")
-        if not last_sync:
-            try:
-                silvasoft_client.sync_customers()
-            except Exception as e:
-                logger.warning(f"Initiële klanten sync fout: {e}")
+        # Alleen synchroniseren als de klantentabel volledig leeg is én er nog nooit gesynchroniseerd is
+        cust_cnt = db.fetchone(f"SELECT COUNT(*) as cnt FROM {prefix}customers")
+        if not cust_cnt or (cust_cnt.get("cnt") or 0) == 0:
+            last_sync = db.fetchone(f"SELECT id FROM {prefix}sync_log WHERE sync_type = 'customers' LIMIT 1")
+            if not last_sync:
+                try:
+                    silvasoft_client.sync_customers()
+                except Exception as e:
+                    logger.warning(f"Initiële klanten sync fout: {e}")
+                    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    db.execute(f"INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at) VALUES (%s, %s, %s, %s, %s)",
+                               ("customers", "error", 0, str(e)[:250], now_str))
 
         if not q:
             rows = db.fetchall(f"SELECT * FROM {prefix}customers WHERE is_customer = 1 ORDER BY name ASC LIMIT 20")

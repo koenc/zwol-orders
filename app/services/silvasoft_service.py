@@ -45,20 +45,24 @@ class SilvasoftClient:
                     verify=False
                 )
                 if (resp.status_code == 401 or resp.status_code == 429) and "Ratelimit exceeded" in resp.text:
-                    logger.warning(f"Silvasoft rate limit bereikt (poging {attempt+1}/3). 2.5 seconden wachten...")
-                    time.sleep(2.5)
+                    if attempt == 2:
+                        raise RuntimeError("Silvasoft API rate limit overschreden (maximaal 50 verzoeken per minuut). Wacht a.u.b. een minuut en probeer het opnieuw.")
+                    logger.warning(f"Silvasoft rate limit bereikt (poging {attempt+1}/3). 3.0 seconden wachten...")
+                    time.sleep(3.0)
                     continue
 
                 if resp.status_code not in (200, 201):
                     logger.error(f"Silvasoft API fout ({method} {endpoint} HTTP {resp.status_code}): {resp.text}")
-                    resp.raise_for_status()
+                    raise RuntimeError(f"Silvasoft API fout ({resp.status_code}): {resp.text[:200]}")
 
                 return resp.json()
             except requests.exceptions.RequestException as e:
                 if attempt == 2:
                     logger.error(f"Fout bij communicatie met Silvasoft ({method} {endpoint}): {e}")
-                    raise
+                    raise RuntimeError(f"Verbindingsfout met Silvasoft: {e}")
                 time.sleep(1.5)
+
+        raise RuntimeError(f"Silvasoft API aanroep naar {endpoint} kon niet worden voltooid na 3 pogingen.")
 
     # --------------------------------------------------------------------------
     # 1. Producten Synchroniseren
@@ -374,7 +378,7 @@ class SilvasoftClient:
                      delivery_date: str, reference: str, items: list) -> dict:
         """
         Maakt een nieuwe order aan in Silvasoft en slaat deze direct lokaal op.
-        items: [{"article_number": "12418", "quantity": 2, "name": "...", "short_name": "..."}]
+        items: [{"article_number": "12418", "quantity": 2, "name": "...", "short_name": "...", "price": 62.48}]
         """
         if not items:
             raise ValueError("Selecteer ten minste één product.")
@@ -388,24 +392,30 @@ class SilvasoftClient:
             qty = int(item.get("quantity") or 0)
             if qty <= 0:
                 continue
-            order_lines.append({
+            line_data = {
                 "ProductNumber": str(item.get("article_number")),
                 "Quantity": qty,
                 "Description": item.get("name") or "",
-                "DeliveryDate": nl_delivery_date
-            })
+                "DeliveryDate": nl_delivery_date,
+                "UseArticlePrice": True,
+                "UseArticleDescription": True
+            }
+            if item.get("price") and float(item["price"]) > 0:
+                line_data["UnitPriceExclTax"] = float(item["price"])
+            order_lines.append(line_data)
 
         if not order_lines:
             raise ValueError("Er zijn geen geldige aantallen ingevuld.")
 
         payload = {
-            "CustomerNumber": int(customer_number) if customer_number and customer_number.isdigit() else 0,
             "CustomerName": customer_name,
             "OrderDate": nl_order_date,
             "OrderReference": reference,
             "OrderStatus": "Bevestigd",
             "Order_Orderline": order_lines
         }
+        if customer_number and str(customer_number).isdigit() and int(customer_number) > 0:
+            payload["CustomerNumber"] = int(customer_number)
 
         logger.info(f"Nieuwe order insturen naar Silvasoft voor klant {customer_name}: {payload}")
         resp = self._request("POST", "addorder/", json_data=payload)
@@ -414,21 +424,99 @@ class SilvasoftClient:
         new_order_number = ""
         if isinstance(resp, dict):
             new_order_number = str(resp.get("OrderNumber") or resp.get("NewOrderNumber") or "")
-        elif isinstance(resp, list) and len(resp) > 0:
-            new_order_number = str(resp[0].get("OrderNumber") or "")
+        elif isinstance(resp, list) and len(resp) > 0 and isinstance(resp[0], dict):
+            new_order_number = str(resp[0].get("OrderNumber") or resp[0].get("NewOrderNumber") or "")
 
-        # Mocht Silvasoft direct een nummer teruggeven of niet, synchroniseer direct de orders
+        if not new_order_number or new_order_number == "0":
+            err_detail = ""
+            if isinstance(resp, dict):
+                err_detail = resp.get("errorMessage") or resp.get("error") or str(resp)
+            raise RuntimeError(f"Silvasoft heeft geen geldig ordernummer geretourneerd ({err_detail or 'Onbekende fout'}).")
+
+        # Weeknummer en jaar berekenen voor het Kanban bord
+        d_week, d_year = self._parse_week_and_year(nl_delivery_date)
+
+        # Adres en contactpersoon bepalen
+        street = unit = postal_code = city = contact_person = phone = ""
+        if isinstance(resp, dict):
+            addresses = resp.get("Order_Address") or []
+            for addr in addresses:
+                if addr.get("Address_Type") == "ShippingAddress":
+                    street = (addr.get("Address_Street") or "").strip()
+                    unit = (addr.get("Address_Unit") or "").strip()
+                    postal_code = (addr.get("Address_PostalCode") or "").strip()
+                    city = (addr.get("Address_City") or "").strip()
+                    break
+            if not street and addresses:
+                first = addresses[0]
+                street = (first.get("Address_Street") or "").strip()
+                unit = (first.get("Address_Unit") or "").strip()
+                postal_code = (first.get("Address_PostalCode") or "").strip()
+                city = (first.get("Address_City") or "").strip()
+
+            contacts = resp.get("Order_Contact") or []
+            if contacts:
+                fc = contacts[0]
+                c_first = (fc.get("FirstName") or "").strip()
+                c_last = (fc.get("LastName") or fc.get("FamilyName") or "").strip()
+                contact_person = f"{c_first} {c_last}".strip()
+                phone = str(fc.get("Phone") or "").strip()
+
+        # Samenvatting bieren bouwen (bijv. "2x OG")
+        summary_parts = []
+        for it in items:
+            q = int(it.get("quantity") or 0)
+            if q > 0:
+                s_name = it.get("short_name") or it.get("name") or "Bier"
+                summary_parts.append(f"{q}x {s_name}")
+        products_summary = ", ".join(summary_parts) if summary_parts else "Bier order"
+
+        # Direct lokaal opslaan in de database zodat de order ALTIJD direct op het bord staat
+        prefix = Config.DB_TABLE_PREFIX
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        order_lines_json = json.dumps(order_lines)
+
+        try:
+            with get_db() as db:
+                existing = db.fetchone(f"SELECT order_number FROM {prefix}orders WHERE order_number = %s", (new_order_number,))
+                if existing:
+                    db.execute(f"""
+                        UPDATE {prefix}orders
+                        SET customer_number = %s, customer_name = %s, contact_person = %s, phone = %s,
+                            address_street = %s, address_unit = %s, address_postal_code = %s, address_city = %s,
+                            order_date = %s, delivery_date = %s, delivery_week = %s, delivery_year = %s,
+                            status = 'Bevestigd', reference = %s, products_summary = %s, order_lines_json = %s, updated_at = %s
+                        WHERE order_number = %s
+                    """, (customer_number, customer_name, contact_person, phone, street, unit, postal_code, city,
+                          nl_order_date, nl_delivery_date, d_week, d_year, reference, products_summary, order_lines_json, now_str, new_order_number))
+                else:
+                    db.execute(f"""
+                        INSERT INTO {prefix}orders (
+                            order_number, customer_number, customer_name, contact_person, phone,
+                            address_street, address_unit, address_postal_code, address_city,
+                            order_date, delivery_date, delivery_week, delivery_year,
+                            status, reference, products_summary, order_lines_json, created_at, updated_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (new_order_number, customer_number, customer_name, contact_person, phone,
+                          street, unit, postal_code, city, nl_order_date, nl_delivery_date, d_week, d_year,
+                          "Bevestigd", reference, products_summary, order_lines_json, now_str, now_str))
+            logger.info(f"Order #{new_order_number} direct lokaal opgeslagen in database.")
+        except Exception as e:
+            logger.error(f"Fout bij direct lokaal opslaan van order #{new_order_number}: {e}")
+
+        # Optionele achtergrond sync van overige orders
         try:
             self.sync_orders()
         except Exception as e:
-            logger.warning(f"Achtergrond sync na aanmaken order mislukt: {e}")
+            logger.warning(f"Achtergrond sync na order creatie overgeslagen: {e}")
 
         return {
             "success": True,
             "order_number": new_order_number,
             "customer_name": customer_name,
+            "delivery_date": nl_delivery_date,
             "reference": reference,
-            "message": "Order succesvol aangemaakt in Silvasoft!"
+            "message": f"Order #{new_order_number} succesvol aangemaakt in Silvasoft!"
         }
 
     # --------------------------------------------------------------------------
@@ -465,17 +553,21 @@ class SilvasoftClient:
     # Helpers
     # --------------------------------------------------------------------------
     def _format_nl_date(self, date_str: str) -> str:
-        """Converteert YYYY-MM-DD of DD-MM-YYYY naar DD-MM-YYYY."""
+        """Converteert YYYY-MM-DD, DD-MM-YYYY of DD-MM naar DD-MM-YYYY."""
         if not date_str:
             return datetime.datetime.now().strftime("%d-%m-%Y")
-        date_str = date_str.strip()
-        if "-" in date_str:
-            parts = date_str.split("-")
+        date_str = str(date_str).strip()
+        if "-" in date_str or "/" in date_str:
+            sep = "-" if "-" in date_str else "/"
+            parts = [p.strip() for p in date_str.split(sep)]
             if len(parts) == 3:
                 if len(parts[0]) == 4:  # YYYY-MM-DD
-                    return f"{parts[2]}-{parts[1]}-{parts[0]}"
+                    return f"{int(parts[2]):02d}-{int(parts[1]):02d}-{parts[0]}"
                 else:  # DD-MM-YYYY
-                    return date_str
+                    return f"{int(parts[0]):02d}-{int(parts[1]):02d}-{parts[2]}"
+            elif len(parts) == 2:  # DD-MM -> voeg huidig jaar toe
+                cur_year = datetime.datetime.now().year
+                return f"{int(parts[0]):02d}-{int(parts[1]):02d}-{cur_year}"
         return datetime.datetime.now().strftime("%d-%m-%Y")
 
     def _parse_week_and_year(self, date_str: str) -> tuple:
@@ -484,16 +576,23 @@ class SilvasoftClient:
             today = datetime.date.today()
             return today.isocalendar()[1], today.year
 
-        clean = date_str.strip()
+        clean = str(date_str).strip()
         try:
-            if "-" in clean:
-                parts = clean.split("-")
-                if len(parts[0]) == 4:
-                    dt = datetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
-                else:
-                    dt = datetime.date(int(parts[2]), int(parts[1]), int(parts[0]))
-                iso = dt.isocalendar()
-                return iso[1], iso[0]
+            if "-" in clean or "/" in clean:
+                sep = "-" if "-" in clean else "/"
+                parts = [p.strip() for p in clean.split(sep)]
+                if len(parts) == 3:
+                    if len(parts[0]) == 4:
+                        dt = datetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
+                    else:
+                        dt = datetime.date(int(parts[2]), int(parts[1]), int(parts[0]))
+                    iso = dt.isocalendar()
+                    return iso[1], iso[0]
+                elif len(parts) == 2:
+                    cur_year = datetime.date.today().year
+                    dt = datetime.date(cur_year, int(parts[1]), int(parts[0]))
+                    iso = dt.isocalendar()
+                    return iso[1], iso[0]
         except Exception:
             pass
 

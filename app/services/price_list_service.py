@@ -25,11 +25,12 @@ STANDARD_GROUP_ORDER = [
 ]
 
 CATEGORY_ORDER = [
-    ("Bier in fles", "🍺"),
-    ("Bier in fust", "🛢️"),
-    ("Glaswerk & Promotie", "🍷"),
-    ("Geschenken & Pakketten", "🎁"),
-    ("Overig", "📦")
+    ("Bier in fles", "bottle"),
+    ("Bier in fust", "keg"),
+    ("Glaswerk & Promotie", "glass"),
+    ("Geschenken & Pakketten", "gift"),
+    ("Verpakkingsmateriaal", "package"),
+    ("Overig", "box")
 ]
 
 
@@ -177,7 +178,7 @@ class PriceListService:
             if not any(c["name"] == cat_name for c in categorized_list):
                 categorized_list.append({
                     "name": cat_name,
-                    "icon": "📦",
+                    "icon": "box",
                     "products": prods
                 })
 
@@ -201,3 +202,4 @@ class PriceListService:
         except Exception as e:
             logger.error(f"Fout bij PDF generatie via WeasyPrint: {e}")
             raise RuntimeError(f"Fout bij PDF generatie: {e}")
+

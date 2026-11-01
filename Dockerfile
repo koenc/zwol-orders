@@ -8,7 +8,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Installeer curl voor de healthcheck en WeasyPrint dependencies (pango, cairo, fonts)
+# Installeer curl voor de healthcheck en WeasyPrint dependencies (Pango, Cairo, moderne typografie fonts)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpango-1.0-0 \
@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdk-pixbuf-2.0-0 \
     shared-mime-info \
     fonts-dejavu-core \
+    fonts-inter \
+    fonts-roboto \
+    fonts-symbola \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

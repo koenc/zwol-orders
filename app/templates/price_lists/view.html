@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>Prijslijst {{ data.group_name }} | Westlandse Bierbrouwerij ZWOL</title>
+  
+  <!-- Inter Web Font (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
     :root {
       --zwol-green: #1b4332;
       --zwol-green-dark: #0f291e;
@@ -12,24 +20,25 @@
       --zwol-gold-light: #fef3c7;
       --zwol-blue: #1a2d42;
       --text-main: #1f2937;
-      --text-muted: #6b7280;
-      --border-color: #e5e7eb;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Liberation Sans", Helvetica, Arial, sans-serif;
     }
 
     body {
       background: #eef2f6;
       color: var(--text-main);
       padding: 24px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Action Bar (hidden on print / PDF) */
+    /* Top Action Bar (verborgen bij print / PDF export) */
     .top-actions-bar {
       max-width: 210mm;
       margin: 0 auto 20px auto;
@@ -109,14 +118,19 @@
     /* Paper Page Container */
     .page-sheet {
       width: 100%;
-      max-width: 210mm;
-      min-height: 297mm;
-      margin: 0 auto;
       background: white;
-      padding: 34px 40px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-      border-radius: 4px;
       position: relative;
+    }
+
+    @media screen {
+      .page-sheet {
+        max-width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 30px 36px;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+        border-radius: 4px;
+      }
     }
 
     /* Header */
@@ -125,23 +139,23 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 2px solid var(--zwol-green);
-      padding-bottom: 18px;
-      margin-bottom: 22px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .header-brand {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .logo-img {
-      width: 64px;
+      width: 60px;
       height: auto;
     }
 
     .brand-title {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 800;
       color: var(--zwol-green-dark);
       letter-spacing: -0.3px;
@@ -149,7 +163,7 @@
     }
 
     .brand-tagline {
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.8px;
@@ -165,75 +179,79 @@
       display: inline-block;
       background: var(--zwol-green);
       color: white;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.8px;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .doc-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--zwol-blue);
     }
 
     .doc-date {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     /* Category Section */
     .category-section {
-      margin-bottom: 22px;
+      margin-bottom: 14px;
     }
 
     .category-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
+      gap: 7px;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
       border-bottom: 1.5px solid #cbd5e1;
     }
 
-    .category-icon {
-      font-size: 15px;
+    .cat-icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--zwol-green);
     }
 
     .category-title {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       color: var(--zwol-green);
     }
 
     .category-count {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
       margin-left: auto;
+      font-weight: 500;
     }
 
     /* Product Table */
     .product-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .product-table th {
       text-align: left;
-      font-size: 10.5px;
+      font-size: 9.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border-color);
+      padding: 5px 6px;
+      border-bottom: 1.5px solid var(--border-color);
       background: #f8fafc;
     }
 
@@ -242,21 +260,21 @@
     }
 
     .product-table td {
-      padding: 8px 8px;
+      padding: 5px 6px;
       border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
-      font-size: 12.5px;
+      font-size: 11.5px;
     }
 
     .cell-img {
-      width: 40px;
+      width: 36px;
       text-align: center;
-      padding: 4px !important;
+      padding: 3px !important;
     }
 
     .thumb-img {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
       border-radius: 4px;
       background: #f8fafc;
@@ -267,24 +285,23 @@
     }
 
     .thumb-placeholder {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f1f5f9;
-      color: #94a3b8;
+      background: #f8fafc;
       border-radius: 4px;
-      font-size: 15px;
       border: 1px solid #e2e8f0;
       margin: 0 auto;
+      color: #94a3b8;
     }
 
     .cell-artno {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      width: 60px;
+      width: 55px;
     }
 
     .cell-name {
@@ -294,15 +311,15 @@
     .prod-title {
       font-weight: 700;
       color: var(--text-main);
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .prod-tag {
       display: inline-block;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
       background: #ecfdf5;
       color: #047857;
       margin-left: 5px;
@@ -311,10 +328,10 @@
 
     .prod-style-tag {
       display: inline-block;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 600;
-      padding: 1px 6px;
-      border-radius: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
       background: #f1f5f9;
       color: #475569;
       margin-left: 3px;
@@ -322,77 +339,86 @@
     }
 
     .prod-desc {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 1.5px;
+      line-height: 1.3;
     }
 
     .cell-unit {
       color: #475569;
-      font-size: 12px;
+      font-size: 11px;
       white-space: nowrap;
     }
 
     .cell-calc {
       text-align: right;
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-muted);
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .cell-price {
       text-align: right;
-      font-size: 13.5px;
+      font-size: 12.5px;
       font-weight: 800;
       color: var(--zwol-green-dark);
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .cell-vat {
       text-align: right;
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      width: 40px;
+      width: 35px;
     }
 
-    /* Conditions Container (Configurable block) */
+    /* Conditions Container (Bestelvoorwaarden) */
     .conditions-container {
-      margin-top: 24px;
-      padding-top: 14px;
-      border-top: 1.5px solid var(--zwol-green);
+      margin-top: 16px;
       background: #fbfbf9;
-      border-radius: 8px;
-      padding: 14px 18px;
+      border-radius: 6px;
+      padding: 12px 16px;
       border: 1px solid #e5e7eb;
     }
 
     .conditions-title {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       color: var(--zwol-green);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       display: block;
     }
 
     .conditions-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 12px;
     }
 
     .condition-box h4 {
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--zwol-blue);
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .condition-box .cond-icon {
+      color: var(--zwol-green);
+      flex-shrink: 0;
     }
 
     .condition-box p, .condition-box li {
-      font-size: 10.5px;
+      font-size: 10px;
       color: #4b5563;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
     .condition-box ul {
@@ -407,13 +433,13 @@
 
     /* Bottom Bar */
     .bottom-bar {
-      margin-top: 20px;
+      margin-top: 14px;
       text-align: center;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
-      border-top: 1.5px solid #cbd5e1;
-      padding-top: 12px;
-      line-height: 1.6;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 10px;
+      line-height: 1.5;
     }
 
     .bottom-row-1 {
@@ -430,13 +456,19 @@
     .bullet {
       color: var(--zwol-gold);
       font-weight: bold;
-      margin: 0 5px;
+      margin: 0 4px;
     }
 
     /* Print & Paged Media Styling */
     @page {
       size: A4 portrait;
-      margin: 10mm 12mm 10mm 12mm;
+      margin: 10mm 12mm 12mm 12mm;
+      @bottom-right {
+        content: "Pagina " counter(page) " van " counter(pages);
+        font-family: 'Inter', sans-serif;
+        font-size: 7.5pt;
+        color: #94a3b8;
+      }
     }
 
     @media print {
@@ -449,23 +481,55 @@
       }
       .page-sheet {
         box-shadow: none !important;
+        border: none !important;
         border-radius: 0 !important;
         padding: 0 !important;
         max-width: 100% !important;
-        min-height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+      }
+      .header {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
       .category-section {
-        page-break-inside: avoid;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+        margin-bottom: 12px;
+      }
+      .category-header {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .product-table {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .product-table thead {
+        display: table-header-group;
+      }
+      .product-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .conditions-container {
-        page-break-inside: avoid;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 14px;
+      }
+      .bottom-bar {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 10px;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Actions Toolbar -->
+  <!-- Top Actions Toolbar (Alleen op scherm zichtbaar) -->
   <div class="top-actions-bar">
     <div class="top-group-pills">
       <a href="{{ url_for('price_lists_index') }}" class="pill-btn">← Alle Prijslijsten</a>
@@ -504,7 +568,38 @@
     {% for cat in data.categories %}
       <div class="category-section">
         <div class="category-header">
-          <span class="category-icon">{{ cat.icon }}</span>
+          <span class="cat-icon-wrap">
+            {% if cat.icon in ['bottle', 'beer', '🍺'] %}
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 2h4v3.5l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8l1.5-2.5V2z"/>
+                <line x1="10" y1="5" x2="14" y2="5"/>
+              </svg>
+            {% elif cat.icon in ['keg', 'fust', '🛢️'] %}
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="8" ry="3"/>
+                <path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/>
+                <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
+              </svg>
+            {% elif cat.icon in ['glass', 'glas', '🍷'] %}
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 22h8"/><path d="M12 15v7"/><path d="M6 3v7a6 6 0 0 0 12 0V3Z"/>
+              </svg>
+            {% elif cat.icon in ['gift', 'geschenk', '🎁'] %}
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 12 20 22 4 22 4 12"/>
+                <rect x="2" y="7" width="20" height="5"/>
+                <line x1="12" y1="22" x2="12" y2="7"/>
+                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            {% else %}
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                <line x1="12" y1="22.08" x2="12" y2="12"/>
+              </svg>
+            {% endif %}
+          </span>
           <span class="category-title">{{ cat.name }}</span>
           <span class="category-count">{{ cat.products|length }} {% if cat.products|length == 1 %}artikel{% else %}artikelen{% endif %}</span>
         </div>
@@ -527,13 +622,26 @@
                   {% if p.has_image %}
                     <img src="{{ url_for('static', filename='img/products/' + p.image_filename) }}" alt="{{ p.name }}" class="thumb-img">
                   {% else %}
-                    <div class="thumb-placeholder">{{ cat.icon }}</div>
+                    <div class="thumb-placeholder">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        {% if cat.icon in ['glass', 'glas', '🍷'] %}
+                          <path d="M8 22h8"/><path d="M12 15v7"/><path d="M6 3v7a6 6 0 0 0 12 0V3Z"/>
+                        {% elif cat.icon in ['gift', 'geschenk', '🎁'] %}
+                          <rect x="3" y="8" width="18" height="13" rx="1"/><line x1="12" y1="8" x2="12" y2="21"/><line x1="3" y1="13" x2="21" y2="13"/>
+                        {% elif cat.icon in ['package', 'verpakking', 'box', '📦'] %}
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        {% else %}
+                          <path d="M10 2h4v3.5l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8l1.5-2.5V2z"/>
+                          <line x1="10" y1="5" x2="14" y2="5"/>
+                        {% endif %}
+                      </svg>
+                    </div>
                   {% endif %}
                 </td>
                 <td class="cell-artno">#{{ p.article_number }}</td>
                 <td class="cell-name">
                   <span class="prod-title">{{ p.name }}</span>
-                  {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}</span>{% endif %}
+                  {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}%</span>{% endif %}
                   {% if p.beer_type %}<span class="prod-style-tag">{{ p.beer_type }}</span>{% endif %}
                   {% if p.description %}<div class="prod-desc">{{ p.description }}</div>{% endif %}
                 </td>
@@ -559,7 +667,15 @@
       <span class="conditions-title">Bestelinformatie &amp; Levervoorwaarden</span>
       <div class="conditions-grid">
         <div class="condition-box">
-          <h4>📦 Bestellen &amp; Levering</h4>
+          <h4>
+            <svg class="cond-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+            Bestellen &amp; Levering
+          </h4>
           <ul>
             {% for line in (data.settings.order_delivery_text or '').split('\n') %}
               {% if line.strip() %}<li>{{ line }}</li>{% endif %}
@@ -567,7 +683,17 @@
           </ul>
         </div>
         <div class="condition-box">
-          <h4>♻️ Emballage &amp; Statiegeld</h4>
+          <h4>
+            <svg class="cond-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"></path>
+              <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"></path>
+              <path d="m14 16 3 3-3 3"></path>
+              <path d="M8.293 13.596 5.196 9.5 9.196 3"></path>
+              <path d="m2 13 3-3.5L8.5 13"></path>
+              <path d="m18 10 3-3.5-3-3.5"></path>
+            </svg>
+            Emballage &amp; Statiegeld
+          </h4>
           <ul>
             {% for line in (data.settings.deposit_text or '').split('\n') %}
               {% if line.strip() %}<li>{{ line }}</li>{% endif %}
@@ -575,7 +701,13 @@
           </ul>
         </div>
         <div class="condition-box">
-          <h4>ℹ️ Betaling &amp; Facturatie</h4>
+          <h4>
+            <svg class="cond-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            Betaling &amp; Facturatie
+          </h4>
           <ul>
             {% for line in (data.settings.payment_text or '').split('\n') %}
               {% if line.strip() %}<li>{{ line }}</li>{% endif %}

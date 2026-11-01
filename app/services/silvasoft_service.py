@@ -176,7 +176,7 @@ class SilvasoftClient:
             if not isinstance(data, list) or len(data) == 0:
                 break
             all_relations.extend(data)
-            if len(data) < limit or len(all_relations) >= 500:
+            if len(data) < limit or len(all_relations) >= 1000:
                 break
             offset += limit
 
@@ -188,12 +188,10 @@ class SilvasoftClient:
             for r in all_relations:
                 customer_number = str(r.get("CustomerNumber") or 0)
                 is_customer = bool(r.get("IsCustomer"))
+                is_private = (r.get("PrivateOrBusiness") == "PrivateRelation")
+
                 # Ook relaties met customer_number > 0 als klant beschouwen
                 if not is_customer and (customer_number == "0" or not customer_number):
-                    continue
-
-                name = (r.get("Name") or "").strip()
-                if not name:
                     continue
 
                 email = (r.get("Email") or "").strip()
@@ -204,18 +202,53 @@ class SilvasoftClient:
                 city = (r.get("Address_City") or "").strip()
                 group_name = (r.get("GroupName") or "").strip()
 
-                # Contactpersoon uit Relation_Contact halen indien aanwezig
+                # Contactpersoon en naamdelen uit Relation_Contact halen
                 contact_person = ""
                 contacts = r.get("Relation_Contact") or []
-                if contacts and isinstance(contacts, list):
+                if contacts and isinstance(contacts, list) and len(contacts) > 0:
                     first_contact = contacts[0]
                     c_first = (first_contact.get("FirstName") or "").strip()
+                    c_prep = (first_contact.get("Preposition") or first_contact.get("Prefix") or "").strip()
                     c_last = (first_contact.get("LastName") or first_contact.get("FamilyName") or "").strip()
-                    contact_person = f"{c_first} {c_last}".strip()
+                    name_parts = [p for p in [c_first, c_prep, c_last] if p]
+                    contact_person = " ".join(name_parts)
                     if not phone and first_contact.get("Phone"):
                         phone = str(first_contact.get("Phone")).strip()
+                    if not phone and first_contact.get("Mobile"):
+                        phone = str(first_contact.get("Mobile")).strip()
                     if not email and first_contact.get("Email"):
                         email = str(first_contact.get("Email")).strip()
+
+                name = (r.get("Name") or "").strip()
+                # Bij particulieren is 'Name' in Silvasoft leeg; gebruik dan de contactpersoon
+                if not name and contact_person:
+                    name = contact_person
+
+                # Eventuele fallback naar root-level naamvelden indien nog leeg
+                if not name:
+                    r_first = (r.get("FirstName") or "").strip()
+                    r_prep = (r.get("Preposition") or r.get("Prefix") or "").strip()
+                    r_last = (r.get("LastName") or r.get("FamilyName") or "").strip()
+                    r_parts = [p for p in [r_first, r_prep, r_last] if p]
+                    if r_parts:
+                        name = " ".join(r_parts)
+
+                if not name:
+                    continue
+
+                # Fallback naar Relation_Address voor adressen van particulieren
+                if not street and not city:
+                    addrs = r.get("Relation_Address") or []
+                    if addrs and isinstance(addrs, list) and len(addrs) > 0:
+                        fa = addrs[0]
+                        street = (fa.get("Address_Street") or "").strip()
+                        unit = (fa.get("Address_Unit") or "").strip()
+                        postal_code = (fa.get("Address_PostalCode") or "").strip()
+                        city = (fa.get("Address_City") or "").strip()
+
+                # Als group_name leeg is en het is een particulier, label als 'Consument'
+                if not group_name and is_private:
+                    group_name = "Consument"
 
                 existing = db.fetchone(f"SELECT customer_number FROM {prefix}customers WHERE customer_number = %s", (customer_number,))
                 if existing:

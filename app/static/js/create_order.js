@@ -137,10 +137,11 @@ function handleCustomerInput(query) {
       customers.forEach(c => {
         const address = [c.street, c.city].filter(Boolean).join(", ");
         const groupTag = c.group_name ? `<span class="product-badge" style="background:#4a5568;font-size:0.75rem;padding:2px 6px;margin-left:6px;vertical-align:middle;">${escapeHtml(c.group_name)}</span>` : "";
+        const showContact = c.contact_person && c.contact_person.trim().toLowerCase() !== c.name.trim().toLowerCase();
         html += `
           <div class="suggestion-item" onclick="selectCustomer('${c.customer_number}', '${escapeJs(c.name)}', '${escapeJs(c.contact_person || '')}', '${escapeJs(address)}', '${escapeJs(c.group_name || '')}')">
             <span class="suggestion-name">${escapeHtml(c.name)} ${groupTag}</span>
-            <span class="suggestion-details">${escapeHtml(address)} ${c.contact_person ? `(Contact: ${escapeHtml(c.contact_person)})` : ''}</span>
+            <span class="suggestion-details">${escapeHtml(address)}${showContact ? ` (Contact: ${escapeHtml(c.contact_person)})` : ''}</span>
           </div>
         `;
       });

@@ -27,3 +27,7 @@ Thumbs.db
 *.log
 logs/
 scratch/
+
+# Generated image caches
+app/static/img/products/thumbs/
+

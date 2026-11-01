@@ -49,6 +49,44 @@ def extract_pieces(unit_str: str, name_str: str) -> int:
 
 class PriceListService:
     @staticmethod
+    def get_or_create_thumbnail(art_no: str) -> Optional[str]:
+        """
+        Controleert of er een productafbeelding voor art_no is, en maakt/retourneert
+        een geoptimaliseerde thumbnail (128x128) zodat HTML en PDF razendsnel en compact blijven.
+        Retourneert het relatieve pad t.o.v. static/img/products/ (bijv. 'thumbs/12359.png') of None.
+        """
+        art_no = str(art_no).strip()
+        source_file = None
+        for ext in (".png", ".jpg", ".jpeg", ".webp"):
+            cand = STATIC_PRODUCTS_DIR / f"{art_no}{ext}"
+            if cand.exists():
+                source_file = cand
+                break
+
+        if not source_file:
+            return None
+
+        thumbs_dir = STATIC_PRODUCTS_DIR / "thumbs"
+        thumb_path = thumbs_dir / f"{art_no}.png"
+
+        try:
+            # Check of thumbnail al up-to-date is t.o.v. het bronbestand
+            if thumb_path.exists() and thumb_path.stat().st_mtime >= source_file.stat().st_mtime:
+                return f"thumbs/{art_no}.png"
+
+            thumbs_dir.mkdir(parents=True, exist_ok=True)
+            from PIL import Image
+            with Image.open(source_file) as im:
+                if im.mode not in ("RGBA", "RGB"):
+                    im = im.convert("RGBA")
+                im.thumbnail((128, 128), Image.Resampling.LANCZOS)
+                im.save(thumb_path, format="PNG", optimize=True)
+            return f"thumbs/{art_no}.png"
+        except Exception as e:
+            logger.warning(f"Kon thumbnail niet genereren voor {art_no}: {e}")
+            return source_file.name
+
+    @staticmethod
     def get_available_groups() -> List[str]:
         """Geeft alle unieke prijsgroepen terug die voorkomen in actieve producten."""
         prefix = Config.DB_TABLE_PREFIX
@@ -105,10 +143,9 @@ class PriceListService:
             art_no = str(r["article_number"]).strip()
             total_price = float(group_price)
 
-            # Check of lokale afbeelding bestaat
-            img_file = f"{art_no}.png"
-            img_path = STATIC_PRODUCTS_DIR / img_file
-            has_image = img_path.exists()
+            # Check of lokale afbeelding bestaat en zorg voor een geoptimaliseerde thumbnail
+            thumb_rel = PriceListService.get_or_create_thumbnail(art_no)
+            has_image = thumb_rel is not None
 
             # Verpakking & stuks berekenen
             unit = r.get("unit") or "Stuks"
@@ -153,7 +190,7 @@ class PriceListService:
                 "piece_price": piece_price,
                 "vat_percentage": float(r.get("vat_percentage") or 21.0),
                 "has_image": has_image,
-                "image_filename": img_file if has_image else None
+                "image_filename": thumb_rel
             })
 
         # Groepeer per categorie volgens CATEGORY_ORDER en sorteer alfabetisch op naam
@@ -211,10 +248,14 @@ class PriceListService:
                     font_config = None
 
             html = HTML(string=html_content, base_url=base_url)
+            kwargs = {}
             if font_config:
-                return html.write_pdf(font_config=font_config)
-            else:
-                return html.write_pdf()
+                kwargs["font_config"] = font_config
+
+            try:
+                return html.write_pdf(optimize_images=True, **kwargs)
+            except (TypeError, Exception):
+                return html.write_pdf(**kwargs)
         except ImportError:
             raise RuntimeError("WeasyPrint is niet geïnstalleerd. Installeer weasyprint om PDF's te genereren.")
         except Exception as e:

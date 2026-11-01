@@ -4,13 +4,37 @@
   <meta charset="UTF-8">
   <title>Prijslijst {{ data.group_name }} | Westlandse Bierbrouwerij ZWOL</title>
   
-  <!-- Inter Web Font (Google Fonts) -->
+  <!-- Inter Web Font (Google Fonts voor browser weergave) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    /* Lokale TrueType @font-face regels voor WeasyPrint / Pango PDF rendering */
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 400;
+      src: url('/static/fonts/Inter-Regular.ttf') format('truetype');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 600;
+      src: url('/static/fonts/Inter-SemiBold.ttf') format('truetype');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 700;
+      src: url('/static/fonts/Inter-Bold.ttf') format('truetype');
+    }
+    @font-face {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 800;
+      src: url('/static/fonts/Inter-Bold.ttf') format('truetype');
+    }
 
     :root {
       --zwol-green: #1b4332;
@@ -202,14 +226,14 @@
 
     /* Category Section */
     .category-section {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .category-header {
       display: flex;
       align-items: center;
-      gap: 7px;
-      padding-bottom: 4px;
+      gap: 8px;
+      padding-bottom: 5px;
       margin-bottom: 8px;
       border-bottom: 1.5px solid #cbd5e1;
     }
@@ -240,17 +264,17 @@
     .product-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .product-table th {
       text-align: left;
-      font-size: 9.5px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
-      padding: 5px 6px;
+      padding: 7px 10px;
       border-bottom: 1.5px solid var(--border-color);
       background: #f8fafc;
     }
@@ -260,21 +284,21 @@
     }
 
     .product-table td {
-      padding: 5px 6px;
+      padding: 8px 10px;
       border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
-      font-size: 11.5px;
+      font-size: 12px;
     }
 
     .cell-img {
-      width: 36px;
+      width: 42px;
       text-align: center;
-      padding: 3px !important;
+      padding: 5px 4px !important;
     }
 
     .thumb-img {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       object-fit: contain;
       border-radius: 4px;
       background: #f8fafc;
@@ -285,8 +309,8 @@
     }
 
     .thumb-placeholder {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -341,7 +365,7 @@
     .prod-desc {
       font-size: 10px;
       color: var(--text-muted);
-      margin-top: 1.5px;
+      margin-top: 2px;
       line-height: 1.3;
     }
 
@@ -570,22 +594,25 @@
         <div class="category-header">
           <span class="cat-icon-wrap">
             {% if cat.icon in ['bottle', 'beer', '🍺'] %}
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 2h4v3.5l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8l1.5-2.5V2z"/>
-                <line x1="10" y1="5" x2="14" y2="5"/>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 11h1a3 3 0 0 1 0 6h-1"></path>
+                <path d="M9 12v6"></path>
+                <path d="M13 12v6"></path>
+                <path d="M5 8h12v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8z"></path>
+                <path d="M5 8c0-1.5 1-3 3.5-3s3.5 1.5 3.5 1.5S13 5 15.5 5 17 6.5 17 8"></path>
               </svg>
             {% elif cat.icon in ['keg', 'fust', '🛢️'] %}
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <ellipse cx="12" cy="5" rx="8" ry="3"/>
                 <path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/>
                 <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
               </svg>
             {% elif cat.icon in ['glass', 'glas', '🍷'] %}
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 22h8"/><path d="M12 15v7"/><path d="M6 3v7a6 6 0 0 0 12 0V3Z"/>
               </svg>
             {% elif cat.icon in ['gift', 'geschenk', '🎁'] %}
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 12 20 22 4 22 4 12"/>
                 <rect x="2" y="7" width="20" height="5"/>
                 <line x1="12" y1="22" x2="12" y2="7"/>
@@ -593,7 +620,7 @@
                 <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
               </svg>
             {% else %}
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                 <line x1="12" y1="22.08" x2="12" y2="12"/>
@@ -623,7 +650,7 @@
                     <img src="{{ url_for('static', filename='img/products/' + p.image_filename) }}" alt="{{ p.name }}" class="thumb-img">
                   {% else %}
                     <div class="thumb-placeholder">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                         {% if cat.icon in ['glass', 'glas', '🍷'] %}
                           <path d="M8 22h8"/><path d="M12 15v7"/><path d="M6 3v7a6 6 0 0 0 12 0V3Z"/>
                         {% elif cat.icon in ['gift', 'geschenk', '🎁'] %}
@@ -641,7 +668,7 @@
                 <td class="cell-artno">#{{ p.article_number }}</td>
                 <td class="cell-name">
                   <span class="prod-title">{{ p.name }}</span>
-                  {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}%</span>{% endif %}
+                  {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}</span>{% endif %}
                   {% if p.beer_type %}<span class="prod-style-tag">{{ p.beer_type }}</span>{% endif %}
                   {% if p.description %}<div class="prod-desc">{{ p.description }}</div>{% endif %}
                 </td>

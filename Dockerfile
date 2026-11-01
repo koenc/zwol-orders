@@ -8,7 +8,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Installeer curl voor de healthcheck en WeasyPrint dependencies (Pango, Cairo, moderne typografie fonts)
+# Installeer curl voor de healthcheck en WeasyPrint dependencies (Pango, Cairo, lettertypebeheer)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpango-1.0-0 \
@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpangocairo-1.0-0 \
     libgdk-pixbuf-2.0-0 \
     shared-mime-info \
+    fontconfig \
     fonts-dejavu-core \
-    fonts-inter \
     fonts-roboto \
     fonts-symbola \
     && rm -rf /var/lib/apt/lists/*
@@ -30,6 +30,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Applicatie code kopiëren
 COPY . /app/
+
+# Kopieer de Inter TrueType lettertypes direct naar het Linux systeem en ververs fontconfig
+RUN mkdir -p /usr/share/fonts/truetype/inter && \
+    cp /app/app/static/fonts/*.ttf /usr/share/fonts/truetype/inter/ && \
+    fc-cache -f -v
 
 # Poort vrijgeven
 EXPOSE 8504

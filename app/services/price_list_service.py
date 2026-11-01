@@ -192,11 +192,24 @@ class PriceListService:
 
     @staticmethod
     def render_pdf(html_content: str, base_url: Optional[str] = None) -> bytes:
-        """Genereert een PDF uit HTML via WeasyPrint."""
+        """Genereert een PDF uit HTML via WeasyPrint met FontConfiguration voor lokale typografie."""
         try:
             from weasyprint import HTML
+            try:
+                from weasyprint.text.fonts import FontConfiguration
+                font_config = FontConfiguration()
+            except ImportError:
+                try:
+                    from weasyprint.fonts import FontConfiguration
+                    font_config = FontConfiguration()
+                except ImportError:
+                    font_config = None
+
             html = HTML(string=html_content, base_url=base_url)
-            return html.write_pdf()
+            if font_config:
+                return html.write_pdf(font_config=font_config)
+            else:
+                return html.write_pdf()
         except ImportError:
             raise RuntimeError("WeasyPrint is niet geïnstalleerd. Installeer weasyprint om PDF's te genereren.")
         except Exception as e:

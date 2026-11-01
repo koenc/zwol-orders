@@ -110,6 +110,9 @@ class SilvasoftClient:
                 cfs = p.get("ProductResponse_CustomField") or []
                 show_in_order_app = False
                 short_name = ""
+                beer_type = ""
+                alcohol_pct = None
+                description = ""
 
                 for cf in cfs:
                     label = (cf.get("Label") or "").strip().lower()
@@ -117,6 +120,17 @@ class SilvasoftClient:
                         show_in_order_app = bool(cf.get("BooleanValue") is True or str(cf.get("StringValue")).strip() in ("1", "true"))
                     elif label == "korte naam":
                         short_name = (cf.get("StringValue") or "").strip().upper()
+                    elif label == "biertype":
+                        beer_type = (cf.get("StringValue") or "").strip()
+                    elif label == "alcoholpercentage":
+                        try:
+                            val = cf.get("DecimalValue") or cf.get("IntValue") or cf.get("StringValue")
+                            if val is not None and str(val).strip() != "":
+                                alcohol_pct = float(str(val).replace(",", "."))
+                        except (ValueError, TypeError):
+                            alcohol_pct = None
+                    elif label == "korte omschrijving":
+                        description = (cf.get("StringValue") or "").strip()
 
                 article_number = str(p.get("ArticleNumber") or "").strip()
                 if not article_number:
@@ -128,21 +142,38 @@ class SilvasoftClient:
                 vat_percentage = float(p.get("VATPercentage") or 21.0)
                 unit = (p.get("Unit") or "Stuks").strip()
 
+                # Prijzen per prijsgroep verzamelen
+                prices = {}
+                for pr in p.get("Product_ProductPrice") or []:
+                    grp = (pr.get("PriceGroup") or "").strip()
+                    sp = pr.get("SalePrice")
+                    if grp and sp is not None:
+                        try:
+                            prices[grp] = float(sp)
+                        except (ValueError, TypeError):
+                            pass
+                prices_json = json.dumps(prices)
+
                 # Upsert product
                 existing = db.fetchone(f"SELECT article_number FROM {prefix}products WHERE article_number = %s", (article_number,))
                 if existing:
                     db.execute(f"""
                         UPDATE {prefix}products
                         SET name = %s, short_name = %s, show_in_order_app = %s, category = %s,
-                            price = %s, vat_percentage = %s, unit = %s, updated_at = %s
+                            price = %s, vat_percentage = %s, unit = %s,
+                            beer_type = %s, alcohol_pct = %s, description = %s, prices_json = %s,
+                            updated_at = %s
                         WHERE article_number = %s
-                    """, (name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit, now_str, article_number))
+                    """, (name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit,
+                          beer_type, alcohol_pct, description, prices_json, now_str, article_number))
                 else:
                     db.execute(f"""
                         INSERT INTO {prefix}products (
-                            article_number, name, short_name, show_in_order_app, category, price, vat_percentage, unit, updated_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (article_number, name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit, now_str))
+                            article_number, name, short_name, show_in_order_app, category, price, vat_percentage, unit,
+                            beer_type, alcohol_pct, description, prices_json, updated_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (article_number, name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit,
+                          beer_type, alcohol_pct, description, prices_json, now_str))
 
                 if show_in_order_app:
                     synced_count += 1

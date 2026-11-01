@@ -66,6 +66,84 @@ def create_order_page():
     return render_template("create.html")
 
 
+# ==============================================================================
+# Prijslijsten Routes
+# ==============================================================================
+@app.route("/prijslijsten")
+@login_required
+def price_lists_index():
+    from app.services.price_list_service import PriceListService
+    groups = PriceListService.get_available_groups()
+    groups_data = []
+    for g in groups:
+        d = PriceListService.get_price_list_data(g)
+        groups_data.append({
+            "name": g,
+            "count": d["total_products"]
+        })
+    return render_template("price_lists/index.html", groups_data=groups_data)
+
+
+@app.route("/prijslijsten/<group_name>")
+@login_required
+def price_list_view(group_name):
+    from app.services.price_list_service import PriceListService
+    data = PriceListService.get_price_list_data(group_name)
+    now = datetime.date.today()
+    month_nl = NL_MONTHS[now.month - 1]
+    today_nl = f"{now.day} {month_nl} {now.year}"
+    return render_template("price_lists/view.html", data=data, today_nl=today_nl)
+
+
+@app.route("/prijslijsten/<group_name>/pdf")
+@login_required
+def price_list_pdf(group_name):
+    from app.services.price_list_service import PriceListService
+    from flask import make_response
+    data = PriceListService.get_price_list_data(group_name)
+    now = datetime.date.today()
+    month_nl = NL_MONTHS[now.month - 1]
+    today_nl = f"{now.day} {month_nl} {now.year}"
+    rendered_html = render_template("price_lists/view.html", data=data, today_nl=today_nl)
+    try:
+        pdf_bytes = PriceListService.render_pdf(rendered_html, base_url=request.url_root)
+        filename = f"ZWOL_Prijslijst_{group_name}_{now.strftime('%Y%m%d')}.pdf"
+        response = make_response(pdf_bytes)
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+        return response
+    except Exception as e:
+        logger.warning(f"WeasyPrint niet beschikbaar of fout ({e}). Terugvallen op printbare HTML.")
+        return render_template("price_lists/view.html", data=data, today_nl=today_nl, auto_print=True)
+
+
+@app.route("/prijslijsten/instellingen", methods=["GET"])
+@login_required
+def price_lists_settings():
+    from app.database import get_all_settings
+    settings = get_all_settings()
+    return render_template("price_lists/settings.html", settings=settings)
+
+
+@app.route("/prijslijsten/instellingen", methods=["POST"])
+@login_required
+def price_lists_settings_post():
+    from app.database import set_setting
+    fields = [
+        "header_tagline",
+        "order_delivery_text",
+        "deposit_text",
+        "payment_text",
+        "company_legal",
+        "company_contact"
+    ]
+    for f in fields:
+        val = request.form.get(f)
+        if val is not None:
+            set_setting(f, val.strip())
+    return redirect(url_for("price_lists_index"))
+
+
 @app.route("/login", methods=["GET"])
 def login():
     if get_current_user():

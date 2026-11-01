@@ -57,6 +57,10 @@
       <span class="nav-icon">➕</span>
       <span>Nieuwe Order</span>
     </a>
+    <a href="{{ url_for('price_lists_index') }}" class="nav-item {% if 'price_list' in (request.endpoint or '') %}active{% endif %}">
+      <span class="nav-icon">🏷️</span>
+      <span>Prijslijsten</span>
+    </a>
   </nav>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>

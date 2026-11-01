@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Prijslijst {{ data.group_name }} | Westlandse Bierbrouwerij ZWOL</title>
+  <style>
+    :root {
+      --zwol-green: #1b4332;
+      --zwol-green-dark: #0f291e;
+      --zwol-green-light: #2d6a4f;
+      --zwol-gold: #c99738;
+      --zwol-gold-light: #fef3c7;
+      --zwol-blue: #1a2d42;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: #eef2f6;
+      color: var(--text-main);
+      padding: 24px;
+    }
+
+    /* Top Action Bar (hidden on print / PDF) */
+    .top-actions-bar {
+      max-width: 210mm;
+      margin: 0 auto 20px auto;
+      background: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .top-group-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #475569;
+      background: #f1f5f9;
+      transition: all 0.15s;
+    }
+
+    .pill-btn:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    .pill-btn.active {
+      background: var(--zwol-green);
+      color: white;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-act {
+      background: var(--zwol-green);
+      color: white;
+      text-decoration: none;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .btn-act:hover {
+      background: var(--zwol-green-dark);
+    }
+
+    .btn-act-sub {
+      background: white;
+      color: var(--text-main);
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-act-sub:hover {
+      background: #f8fafc;
+    }
+
+    /* Paper Page Container */
+    .page-sheet {
+      width: 100%;
+      max-width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: white;
+      padding: 34px 40px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--zwol-green);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-img {
+      width: 64px;
+      height: auto;
+    }
+
+    .brand-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--zwol-green-dark);
+      letter-spacing: -0.3px;
+      line-height: 1.15;
+    }
+
+    .brand-tagline {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .header-meta {
+      text-align: right;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      background: var(--zwol-green);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .doc-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--zwol-blue);
+    }
+
+    .doc-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* Category Section */
+    .category-section {
+      margin-bottom: 22px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+      border-bottom: 1.5px solid #cbd5e1;
+    }
+
+    .category-icon {
+      font-size: 15px;
+    }
+
+    .category-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--zwol-green);
+    }
+
+    .category-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* Product Table */
+    .product-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6px;
+    }
+
+    .product-table th {
+      text-align: left;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .product-table th.th-right {
+      text-align: right;
+    }
+
+    .product-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      font-size: 12.5px;
+    }
+
+    .cell-img {
+      width: 40px;
+      text-align: center;
+      padding: 4px !important;
+    }
+
+    .thumb-img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #f8fafc;
+      padding: 1px;
+      border: 1px solid #e2e8f0;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .thumb-placeholder {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-radius: 4px;
+      font-size: 15px;
+      border: 1px solid #e2e8f0;
+      margin: 0 auto;
+    }
+
+    .cell-artno {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 60px;
+    }
+
+    .cell-name {
+      line-height: 1.25;
+    }
+
+    .prod-title {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 13px;
+    }
+
+    .prod-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #ecfdf5;
+      color: #047857;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .prod-style-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+
+    .prod-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .cell-unit {
+      color: #475569;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .cell-calc {
+      text-align: right;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .cell-price {
+      text-align: right;
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--zwol-green-dark);
+      white-space: nowrap;
+    }
+
+    .cell-vat {
+      text-align: right;
+      font-size: 11px;
+      color: var(--text-muted);
+      width: 40px;
+    }
+
+    /* Conditions Container (Configurable block) */
+    .conditions-container {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1.5px solid var(--zwol-green);
+      background: #fbfbf9;
+      border-radius: 8px;
+      padding: 14px 18px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .conditions-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--zwol-green);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .conditions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .condition-box h4 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--zwol-blue);
+      margin-bottom: 4px;
+    }
+
+    .condition-box p, .condition-box li {
+      font-size: 10.5px;
+      color: #4b5563;
+      line-height: 1.4;
+    }
+
+    .condition-box ul {
+      list-style-type: none;
+    }
+
+    .condition-box li:before {
+      content: "• ";
+      color: var(--zwol-gold);
+      font-weight: bold;
+    }
+
+    /* Bottom Bar */
+    .bottom-bar {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1.5px solid #cbd5e1;
+      padding-top: 12px;
+      line-height: 1.6;
+    }
+
+    .bottom-row-1 {
+      font-weight: 500;
+      color: #4b5563;
+    }
+
+    .bottom-row-2 {
+      font-weight: 600;
+      color: var(--zwol-green-dark);
+      margin-top: 2px;
+    }
+
+    .bullet {
+      color: var(--zwol-gold);
+      font-weight: bold;
+      margin: 0 5px;
+    }
+
+    /* Print & Paged Media Styling */
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 10mm 12mm;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .top-actions-bar {
+        display: none !important;
+      }
+      .page-sheet {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+      }
+      .category-section {
+        page-break-inside: avoid;
+      }
+      .conditions-container {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Actions Toolbar -->
+  <div class="top-actions-bar">
+    <div class="top-group-pills">
+      <a href="{{ url_for('price_lists_index') }}" class="pill-btn">← Alle Prijslijsten</a>
+      {% for g in data.available_groups %}
+        <a href="{{ url_for('price_list_view', group_name=g) }}" class="pill-btn {% if g == data.group_name %}active{% endif %}">
+          {{ g }}
+        </a>
+      {% endfor %}
+    </div>
+    <div class="action-buttons">
+      <button class="btn-act btn-act-sub" onclick="window.print()">🖨️ Afdrukken</button>
+      <a href="{{ url_for('price_list_pdf', group_name=data.group_name) }}" class="btn-act">⬇️ Download PDF</a>
+    </div>
+  </div>
+
+  <!-- A4 Printable Sheet -->
+  <div class="page-sheet">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-brand">
+        <img src="{{ url_for('static', filename='img/ZWOL Logo.svg') }}" alt="ZWOL Logo" class="logo-img">
+        <div>
+          <h1 class="brand-title">Westlandse Bierbrouwerij ZWOL</h1>
+          <p class="brand-tagline">{{ data.settings.header_tagline or 'Echt Westlands Bier • Sinds 2021' }}</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span class="doc-badge">{{ data.group_name|upper }}</span>
+        <div class="doc-title">Assortiment &amp; Prijslijst</div>
+        <div class="doc-date">Prijzen per {{ today_nl }} • Excl. btw</div>
+      </div>
+    </div>
+
+    <!-- Product Categorieën -->
+    {% for cat in data.categories %}
+      <div class="category-section">
+        <div class="category-header">
+          <span class="category-icon">{{ cat.icon }}</span>
+          <span class="category-title">{{ cat.name }}</span>
+          <span class="category-count">{{ cat.products|length }} {% if cat.products|length == 1 %}artikel{% else %}artikelen{% endif %}</span>
+        </div>
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th class="cell-img"></th>
+              <th>Art.nr.</th>
+              <th>Bier / Artikel &amp; Omschrijving</th>
+              <th>Verpakking</th>
+              <th class="th-right">Stuksprijs</th>
+              <th class="th-right">Prijs excl. btw</th>
+              <th class="th-right">Btw</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in cat.products %}
+              <tr>
+                <td class="cell-img">
+                  {% if p.has_image %}
+                    <img src="{{ url_for('static', filename='img/products/' + p.image_filename) }}" alt="{{ p.name }}" class="thumb-img">
+                  {% else %}
+                    <div class="thumb-placeholder">{{ cat.icon }}</div>
+                  {% endif %}
+                </td>
+                <td class="cell-artno">#{{ p.article_number }}</td>
+                <td class="cell-name">
+                  <span class="prod-title">{{ p.name }}</span>
+                  {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}</span>{% endif %}
+                  {% if p.beer_type %}<span class="prod-style-tag">{{ p.beer_type }}</span>{% endif %}
+                  {% if p.description %}<div class="prod-desc">{{ p.description }}</div>{% endif %}
+                </td>
+                <td class="cell-unit">{{ p.unit }}</td>
+                <td class="cell-calc">
+                  {% if p.piece_price %}
+                    € {{ "%.2f"|format(p.piece_price)|replace('.', ',') }} / st.
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td class="cell-price">€ {{ "%.2f"|format(p.total_price)|replace('.', ',') }}</td>
+                <td class="cell-vat">{{ p.vat_percentage|int }}%</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+
+    <!-- Bestelinformatie & Levervoorwaarden (Instelbaar) -->
+    <div class="conditions-container">
+      <span class="conditions-title">Bestelinformatie &amp; Levervoorwaarden</span>
+      <div class="conditions-grid">
+        <div class="condition-box">
+          <h4>📦 Bestellen &amp; Levering</h4>
+          <ul>
+            {% for line in (data.settings.order_delivery_text or '').split('\n') %}
+              {% if line.strip() %}<li>{{ line }}</li>{% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="condition-box">
+          <h4>♻️ Emballage &amp; Statiegeld</h4>
+          <ul>
+            {% for line in (data.settings.deposit_text or '').split('\n') %}
+              {% if line.strip() %}<li>{{ line }}</li>{% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="condition-box">
+          <h4>ℹ️ Betaling &amp; Facturatie</h4>
+          <ul>
+            {% for line in (data.settings.payment_text or '').split('\n') %}
+              {% if line.strip() %}<li>{{ line }}</li>{% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+      <div class="bottom-row-1">
+        {{ data.settings.company_legal or "Westlandse Bierbrouwerij B.V. • 's-Gravenzande • KvK: 42011646 • BTW: NL869279816B01" }}
+      </div>
+      <div class="bottom-row-2">
+        {{ data.settings.company_contact or "brouwerijzwol.nl • info@brouwerijzwol.nl • 06-51392982" }}
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

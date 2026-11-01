@@ -216,6 +216,14 @@ def init_db():
                 created_at TEXT
             )
             """)
+
+            db.execute(f"""
+            CREATE TABLE IF NOT EXISTS {prefix}settings (
+                setting_key TEXT PRIMARY KEY,
+                setting_value TEXT,
+                updated_at TEXT
+            )
+            """)
         else:
             # MariaDB DDL
             db.execute(f"""
@@ -248,6 +256,10 @@ def init_db():
                 `price` DECIMAL(10, 2) DEFAULT 0.00,
                 `vat_percentage` DECIMAL(5, 2) DEFAULT 21.00,
                 `unit` VARCHAR(50) NULL,
+                `beer_type` VARCHAR(100) NULL,
+                `alcohol_pct` DECIMAL(4, 2) NULL,
+                `description` TEXT NULL,
+                `prices_json` LONGTEXT NULL,
                 `updated_at` DATETIME NULL,
                 PRIMARY KEY (`article_number`),
                 INDEX `idx_prod_short` (`short_name`),
@@ -295,7 +307,15 @@ def init_db():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
 
-        # Migratie check: voeg group_name toe indien tabel al bestond zonder deze kolom
+            db.execute(f"""
+            CREATE TABLE IF NOT EXISTS `{prefix}settings` (
+                `setting_key` VARCHAR(50) NOT NULL PRIMARY KEY,
+                `setting_value` TEXT NULL,
+                `updated_at` DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
+
+        # Migratie check: voeg group_name toe aan customers
         try:
             if db.is_sqlite:
                 db.execute(f"ALTER TABLE {prefix}customers ADD COLUMN group_name TEXT;")
@@ -304,4 +324,84 @@ def init_db():
         except Exception:
             pass
 
+        # Migraties voor products (prijslijst velden)
+        prod_cols = [
+            ("beer_type", "TEXT" if db.is_sqlite else "VARCHAR(100) NULL"),
+            ("alcohol_pct", "REAL" if db.is_sqlite else "DECIMAL(4, 2) NULL"),
+            ("description", "TEXT" if db.is_sqlite else "TEXT NULL"),
+            ("prices_json", "TEXT" if db.is_sqlite else "LONGTEXT NULL")
+        ]
+        for col_name, col_type in prod_cols:
+            try:
+                if db.is_sqlite:
+                    db.execute(f"ALTER TABLE {prefix}products ADD COLUMN {col_name} {col_type};")
+                else:
+                    db.execute(f"ALTER TABLE `{prefix}products` ADD COLUMN `{col_name}` {col_type};")
+            except Exception:
+                pass
+
+        # Default settings seeden indien nog niet aanwezig
+        default_settings = {
+            "header_tagline": "Echt Westlands Bier • Sinds 2021",
+            "order_delivery_text": "Bestellen via orders@zwolbier.nl of direct in de ZWOL Order App.\nVoor woensdag 12:00 besteld = donderdag of vrijdag geleverd.\nGratis bezorging in regio Westland / Den Haag / Delft vanaf 2 dozen of 1 fust.",
+            "deposit_text": "Flessen 33cl (doos 24 stuks): € 2,40 statiegeld (€ 0,10 / fles).\nFusten 20L en 50L: € 30,00 statiegeld per fust.\nLeeggoed wordt direct verrekend bij de volgende levering.",
+            "payment_text": "Facturatie digitaal via Silvasoft.\nStandaard betalingstermijn: 14 dagen netto.\nAlle vermelde prijzen zijn in Euro (€) en exclusief 21% btw.",
+            "company_legal": "Westlandse Bierbrouwerij B.V. • 's-Gravenzande • KvK: 42011646 • BTW: NL869279816B01",
+            "company_contact": "brouwerijzwol.nl • info@brouwerijzwol.nl • 06-51392982"
+        }
+        now_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for k, v in default_settings.items():
+            existing = db.fetchone(f"SELECT setting_key FROM {prefix}settings WHERE setting_key = %s", (k,))
+            if not existing:
+                if db.is_sqlite:
+                    db.execute(f"INSERT INTO {prefix}settings (setting_key, setting_value, updated_at) VALUES (%s, %s, %s)", (k, v, now_dt))
+                else:
+                    db.execute(f"INSERT INTO `{prefix}settings` (`setting_key`, `setting_value`, `updated_at`) VALUES (%s, %s, %s)", (k, v, now_dt))
+
     logger.info(f"Database tabellen met prefix '{prefix}' succesvol gecontroleerd/aangemaakt.")
+
+
+def get_setting(key: str, default: str = "") -> str:
+    """Haalt een instelling op uit de database."""
+    prefix = Config.DB_TABLE_PREFIX
+    try:
+        with get_db() as db:
+            row = db.fetchone(f"SELECT setting_value FROM {prefix}settings WHERE setting_key = %s", (key,))
+            if row and row.get("setting_value") is not None:
+                return row["setting_value"]
+    except Exception as e:
+        logger.warning(f"Fout bij ophalen setting {key}: {e}")
+    return default
+
+
+def get_all_settings() -> dict:
+    """Haalt alle instellingen op uit de database."""
+    prefix = Config.DB_TABLE_PREFIX
+    settings = {}
+    try:
+        with get_db() as db:
+            rows = db.fetchall(f"SELECT setting_key, setting_value FROM {prefix}settings")
+            for r in rows:
+                settings[r["setting_key"]] = r["setting_value"]
+    except Exception as e:
+        logger.warning(f"Fout bij ophalen all settings: {e}")
+    return settings
+
+
+def set_setting(key: str, value: str):
+    """Slaat een instelling op in de database."""
+    prefix = Config.DB_TABLE_PREFIX
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with get_db() as db:
+        if db.is_sqlite:
+            db.execute(f"""
+                INSERT INTO {prefix}settings (setting_key, setting_value, updated_at)
+                VALUES (%s, %s, %s)
+                ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = excluded.updated_at
+            """, (key, value, now_str))
+        else:
+            db.execute(f"""
+                INSERT INTO `{prefix}settings` (`setting_key`, `setting_value`, `updated_at`)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`), `updated_at` = VALUES(`updated_at`)
+            """, (key, value, now_str))

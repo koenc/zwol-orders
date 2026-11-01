@@ -15,7 +15,7 @@ class Config:
     DB_PORT = 3307
     DB_NAME = "zwol"
     DB_USER = "ketelhuis"
-    DB_PASSWORD = "HeinekenStinkt123#"
+    DB_PASSWORD = ""
     DB_TABLE_PREFIX = "ordersystem_"
     SQLITE_PATH = BASE_DIR / "data" / "zwol_orders.db"
 

@@ -61,8 +61,8 @@ Vul de gegevens in:
 * `DB_PORT=3307`
 * `DB_NAME=zwol`
 * `DB_USER=ketelhuis`
-* `DB_PASSWORD=HeinekenStinkt123#`
-* `SILVASOFT_USERNAME=info@brouwerijzwol.nl`
+* `DB_PASSWORD=...`
+* `SILVASOFT_USERNAME=...`
 * `SILVASOFT_API_KEY=...`
 * `CLOUDFLARE_TUNNEL_TOKEN=...` (jouw Cloudflare tunnel token gekoppeld aan `orders.brouwerijzwol.nl`)
 

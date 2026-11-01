@@ -85,7 +85,7 @@ class PriceListService:
                        unit, beer_type, alcohol_pct, description, prices_json
                 FROM {prefix}products
                 WHERE show_in_order_app = 1
-                ORDER BY category ASC, article_number ASC
+                ORDER BY category ASC, name ASC
             """)
 
         filtered_products = []
@@ -156,13 +156,17 @@ class PriceListService:
                 "image_filename": img_file if has_image else None
             })
 
-        # Groepeer per categorie volgens CATEGORY_ORDER
+        # Groepeer per categorie volgens CATEGORY_ORDER en sorteer alfabetisch op naam
         categories_dict = {}
         for p in filtered_products:
             c = p["category"]
             if c not in categories_dict:
                 categories_dict[c] = []
             categories_dict[c].append(p)
+
+        # Sorteer artikelen binnen elke categorie strikt alfabetisch op naam
+        for c in categories_dict:
+            categories_dict[c].sort(key=lambda x: (x["name"] or "").strip().lower())
 
         categorized_list = []
         for cat_name, icon in CATEGORY_ORDER:
@@ -176,6 +180,7 @@ class PriceListService:
         # Eventuele overige categorieën toevoegen
         for cat_name, prods in categories_dict.items():
             if not any(c["name"] == cat_name for c in categorized_list):
+                prods.sort(key=lambda x: (x["name"] or "").strip().lower())
                 categorized_list.append({
                     "name": cat_name,
                     "icon": "box",

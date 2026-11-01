@@ -163,20 +163,23 @@ class SilvasoftClient:
         """Haalt alle klanten/relaties op uit Silvasoft voor autocomplete."""
         logger.info("Start synchronisatie klanten vanuit Silvasoft...")
         offset = 0
-        limit = 100
+        limit = 200
         all_relations = []
 
         while True:
             params = {
+                "RelationType": "Customer",
                 "relationtype": "Customer",
-                "offset": offset,
-                "limit": limit
+                "Limit": limit,
+                "limit": limit,
+                "Offset": offset,
+                "offset": offset
             }
             data = self._request("GET", "listrelations/", params=params)
             if not isinstance(data, list) or len(data) == 0:
                 break
             all_relations.extend(data)
-            if len(data) < limit or len(all_relations) >= 1000:
+            if len(data) < limit or len(all_relations) >= 3000:
                 break
             offset += limit
 

@@ -373,18 +373,13 @@
       line-height: 1.3;
     }
 
-    .cell-unit {
-      color: #475569;
-      font-size: 11px;
-      white-space: nowrap;
-    }
-
     .cell-calc {
       text-align: right;
       font-size: 11px;
       color: var(--text-muted);
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      width: 95px;
     }
 
     .cell-price {
@@ -394,13 +389,14 @@
       color: var(--zwol-green-dark);
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
+      width: 105px;
     }
 
     .cell-vat {
       text-align: right;
       font-size: 10.5px;
       color: var(--text-muted);
-      width: 35px;
+      width: 40px;
     }
 
     /* Conditions Container (Bestelvoorwaarden) */
@@ -638,12 +634,11 @@
           <thead>
             <tr>
               <th class="cell-img"></th>
-              <th>Art.nr.</th>
+              <th style="width: 55px;">Art.nr.</th>
               <th>Bier / Artikel &amp; Omschrijving</th>
-              <th>Verpakking</th>
-              <th class="th-right">Stuksprijs</th>
-              <th class="th-right">Prijs excl. btw</th>
-              <th class="th-right">Btw</th>
+              <th class="th-right" style="width: 95px;">Stuksprijs</th>
+              <th class="th-right" style="width: 105px;">Prijs excl. btw</th>
+              <th class="th-right" style="width: 40px;">Btw</th>
             </tr>
           </thead>
           <tbody>
@@ -676,7 +671,6 @@
                   {% if p.beer_type %}<span class="prod-style-tag">{{ p.beer_type }}</span>{% endif %}
                   {% if p.description %}<div class="prod-desc">{{ p.description }}</div>{% endif %}
                 </td>
-                <td class="cell-unit">{{ p.unit }}</td>
                 <td class="cell-calc">
                   {% if p.piece_price %}
                     € {{ "%.2f"|format(p.piece_price)|replace('.', ',') }} / st.

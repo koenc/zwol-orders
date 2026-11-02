@@ -149,8 +149,8 @@ class PriceListService:
 
             # Verpakking & stuks berekenen
             unit = r.get("unit") or "Stuks"
-            pcs = extract_pieces(unit, r.get("name") or "")
-            piece_price = round(total_price / pcs, 2) if pcs > 1 else None
+            pcs = max(1, extract_pieces(unit, r.get("name") or ""))
+            piece_price = round(total_price / pcs, 2)
 
             # Categorie normaliseren
             raw_cat = (r.get("category") or "").strip()

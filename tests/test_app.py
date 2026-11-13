@@ -37,19 +37,29 @@ class TestZwolOrdersApp(unittest.TestCase):
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, ("TEST_1", "Café Het Bruine Paard", "Jan de Vries", "jan@bruinepaard.nl", "0612345678", "Markt", "10", "2671AA", "Naaldwijk", 1, now_str))
 
-            # Producten (met 'Tonen in ZWOL order app' = 1)
-            db.execute(f"DELETE FROM {prefix}products WHERE article_number IN ('TEST_ZS', 'TEST_BM')")
+            # Producten:
+            # - TEST_ZS: tonen in order app (1) en tonen op prijslijsten (1)
+            # - TEST_BM: tonen in order app (1) en NIET op prijslijsten (0)
+            # - TEST_PL: NIET in order app (0) en WEL op prijslijsten (1)
+            db.execute(f"DELETE FROM {prefix}products WHERE article_number IN ('TEST_ZS', 'TEST_BM', 'TEST_PL')")
+            prices_sample = json.dumps({"Horeca": 55.0, "Slijterij": 52.0})
             db.execute(f"""
                 INSERT INTO {prefix}products (
-                    article_number, name, short_name, show_in_order_app, category, price, vat_percentage, unit, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, ("TEST_ZS", "Zuipschuit 33cl 24 stuks", "ZS", 1, "Bier in fles", 62.48, 21.0, "Doos", now_str))
+                    article_number, name, short_name, show_in_order_app, show_on_price_list, category, price, vat_percentage, unit, prices_json, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, ("TEST_ZS", "Zuipschuit 33cl 24 stuks", "ZS", 1, 1, "Bier in fles", 62.48, 21.0, "Doos", prices_sample, now_str))
 
             db.execute(f"""
                 INSERT INTO {prefix}products (
-                    article_number, name, short_name, show_in_order_app, category, price, vat_percentage, unit, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, ("TEST_BM", "Barre Mannen 33cl 24 stuks", "BM", 1, "Bier in fles", 64.00, 21.0, "Doos", now_str))
+                    article_number, name, short_name, show_in_order_app, show_on_price_list, category, price, vat_percentage, unit, prices_json, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, ("TEST_BM", "Barre Mannen 33cl 24 stuks", "BM", 1, 0, "Bier in fles", 64.00, 21.0, "Doos", prices_sample, now_str))
+
+            db.execute(f"""
+                INSERT INTO {prefix}products (
+                    article_number, name, short_name, show_in_order_app, show_on_price_list, category, price, vat_percentage, unit, prices_json, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, ("TEST_PL", "Exclusief Prijslijst Bier", "EP", 0, 1, "Bier in fles", 70.00, 21.0, "Doos", prices_sample, now_str))
 
             # Bestaande order
             db.execute(f"DELETE FROM {prefix}orders WHERE order_number = 'TEST_ORDER_999'")
@@ -99,6 +109,20 @@ class TestZwolOrdersApp(unittest.TestCase):
         self.assertTrue(data.get("success"))
         names = [p["name"] for p in data["products"]]
         self.assertIn("Zuipschuit 33cl 24 stuks", names)
+        self.assertIn("Barre Mannen 33cl 24 stuks", names)
+        # Exclusief Prijslijst Bier heeft show_in_order_app = 0 en mag hier niet in voorkomen
+        self.assertNotIn("Exclusief Prijslijst Bier", names)
+
+    def test_price_list_product_filtering(self):
+        from app.services.price_list_service import PriceListService
+        data = PriceListService.get_price_list_data("Horeca")
+        art_nos = [p["article_number"] for cat in data["categories"] for p in cat["products"]]
+
+        # TEST_ZS en TEST_PL hebben show_on_price_list = 1 en moeten zichtbaar zijn
+        self.assertIn("TEST_ZS", art_nos)
+        self.assertIn("TEST_PL", art_nos)
+        # TEST_BM heeft show_on_price_list = 0 en mag NIET op de prijslijst staan
+        self.assertNotIn("TEST_BM", art_nos)
 
     def test_api_customers_search(self):
         resp = self.client.get("/api/customers?q=Bruine")

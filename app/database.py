@@ -174,6 +174,7 @@ def init_db():
                 name TEXT NOT NULL,
                 short_name TEXT,
                 show_in_order_app INTEGER DEFAULT 1,
+                show_on_price_list INTEGER DEFAULT 0,
                 category TEXT,
                 price REAL DEFAULT 0.0,
                 vat_percentage REAL DEFAULT 21.0,
@@ -252,6 +253,7 @@ def init_db():
                 `name` VARCHAR(255) NOT NULL,
                 `short_name` VARCHAR(50) NULL,
                 `show_in_order_app` TINYINT(1) DEFAULT 1,
+                `show_on_price_list` TINYINT(1) DEFAULT 0,
                 `category` VARCHAR(100) NULL,
                 `price` DECIMAL(10, 2) DEFAULT 0.00,
                 `vat_percentage` DECIMAL(5, 2) DEFAULT 21.00,
@@ -263,7 +265,8 @@ def init_db():
                 `updated_at` DATETIME NULL,
                 PRIMARY KEY (`article_number`),
                 INDEX `idx_prod_short` (`short_name`),
-                INDEX `idx_prod_show` (`show_in_order_app`)
+                INDEX `idx_prod_show` (`show_in_order_app`),
+                INDEX `idx_prod_show_price_list` (`show_on_price_list`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
 
@@ -329,7 +332,8 @@ def init_db():
             ("beer_type", "TEXT" if db.is_sqlite else "VARCHAR(100) NULL"),
             ("alcohol_pct", "REAL" if db.is_sqlite else "DECIMAL(4, 2) NULL"),
             ("description", "TEXT" if db.is_sqlite else "TEXT NULL"),
-            ("prices_json", "TEXT" if db.is_sqlite else "LONGTEXT NULL")
+            ("prices_json", "TEXT" if db.is_sqlite else "LONGTEXT NULL"),
+            ("show_on_price_list", "INTEGER DEFAULT 0" if db.is_sqlite else "TINYINT(1) DEFAULT 0")
         ]
         for col_name, col_type in prod_cols:
             try:
@@ -339,6 +343,12 @@ def init_db():
                     db.execute(f"ALTER TABLE `{prefix}products` ADD COLUMN `{col_name}` {col_type};")
             except Exception:
                 pass
+
+        try:
+            if not db.is_sqlite:
+                db.execute(f"ALTER TABLE `{prefix}products` ADD INDEX `idx_prod_show_price_list` (`show_on_price_list`);")
+        except Exception:
+            pass
 
         # Default settings seeden indien nog niet aanwezig
         default_settings = {

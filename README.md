@@ -33,7 +33,7 @@ Een simpele, snelle, zeer gebruiksvriendelijke mobiele webapplicatie (PWA) boven
 * **Backend:** Python 3.11 met Flask & Gunicorn.
 * **Database:** MariaDB 10 op de Synology NAS (`127.0.0.1:3307`), database **`zwol`**, tabellen met prefix **`ordersystem_`**:
   * `ordersystem_customers`: Klantengegevens voor directe 0ms autocomplete.
-  * `ordersystem_products`: Bieren met vlag `show_in_order_app` en afkorting `short_name`.
+  * `ordersystem_products`: Bieren met vlaggen `show_in_order_app` ("Tonen in ZWOL order app"), `show_on_price_list` ("Tonen op prijslijsten") en afkorting `short_name`.
   * `ordersystem_orders`: Openstaande en historische orders gecachet voor snelle weergave.
   * `ordersystem_sync_log`: Logboek van achtergrondsynchronisaties met Silvasoft.
 * **Fallback:** Automatische overschakeling naar lokaal SQLite (`data/zwol_orders.db`) bij lokaal ontwikkelen zonder actieve NAS-verbinding.

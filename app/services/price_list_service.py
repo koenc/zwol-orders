@@ -88,11 +88,11 @@ class PriceListService:
 
     @staticmethod
     def get_available_groups() -> List[str]:
-        """Geeft alle unieke prijsgroepen terug die voorkomen in actieve producten."""
+        """Geeft alle unieke prijsgroepen terug die voorkomen in actieve producten op de prijslijsten."""
         prefix = Config.DB_TABLE_PREFIX
         groups_set = set()
         with get_db() as db:
-            rows = db.fetchall(f"SELECT prices_json FROM {prefix}products WHERE show_in_order_app = 1")
+            rows = db.fetchall(f"SELECT prices_json FROM {prefix}products WHERE show_on_price_list = 1")
             for r in rows:
                 p_json = r.get("prices_json")
                 if p_json:
@@ -122,7 +122,7 @@ class PriceListService:
                 SELECT article_number, name, short_name, category, price, vat_percentage,
                        unit, beer_type, alcohol_pct, description, prices_json
                 FROM {prefix}products
-                WHERE show_in_order_app = 1
+                WHERE show_on_price_list = 1
                 ORDER BY category ASC, name ASC
             """)
 

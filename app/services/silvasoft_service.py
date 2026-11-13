@@ -104,11 +104,13 @@ class SilvasoftClient:
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         prefix = Config.DB_TABLE_PREFIX
         synced_count = 0
+        synced_price_list_count = 0
 
         with get_db() as db:
             for p in all_products:
                 cfs = p.get("ProductResponse_CustomField") or []
                 show_in_order_app = False
+                show_on_price_list = False
                 short_name = ""
                 beer_type = ""
                 alcohol_pct = None
@@ -117,7 +119,9 @@ class SilvasoftClient:
                 for cf in cfs:
                     label = (cf.get("Label") or "").strip().lower()
                     if label == "tonen in zwol order app":
-                        show_in_order_app = bool(cf.get("BooleanValue") is True or str(cf.get("StringValue")).strip() in ("1", "true"))
+                        show_in_order_app = bool(cf.get("BooleanValue") is True or str(cf.get("StringValue")).strip().lower() in ("1", "true", "ja"))
+                    elif label in ("tonen op prijslijsten", "tonen op prijslijst"):
+                        show_on_price_list = bool(cf.get("BooleanValue") is True or str(cf.get("StringValue")).strip().lower() in ("1", "true", "ja"))
                     elif label == "korte naam":
                         short_name = (cf.get("StringValue") or "").strip().upper()
                     elif label == "biertype":
@@ -159,30 +163,32 @@ class SilvasoftClient:
                 if existing:
                     db.execute(f"""
                         UPDATE {prefix}products
-                        SET name = %s, short_name = %s, show_in_order_app = %s, category = %s,
+                        SET name = %s, short_name = %s, show_in_order_app = %s, show_on_price_list = %s, category = %s,
                             price = %s, vat_percentage = %s, unit = %s,
                             beer_type = %s, alcohol_pct = %s, description = %s, prices_json = %s,
                             updated_at = %s
                         WHERE article_number = %s
-                    """, (name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit,
+                    """, (name, short_name, 1 if show_in_order_app else 0, 1 if show_on_price_list else 0, category, price, vat_percentage, unit,
                           beer_type, alcohol_pct, description, prices_json, now_str, article_number))
                 else:
                     db.execute(f"""
                         INSERT INTO {prefix}products (
-                            article_number, name, short_name, show_in_order_app, category, price, vat_percentage, unit,
+                            article_number, name, short_name, show_in_order_app, show_on_price_list, category, price, vat_percentage, unit,
                             beer_type, alcohol_pct, description, prices_json, updated_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (article_number, name, short_name, 1 if show_in_order_app else 0, category, price, vat_percentage, unit,
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (article_number, name, short_name, 1 if show_in_order_app else 0, 1 if show_on_price_list else 0, category, price, vat_percentage, unit,
                           beer_type, alcohol_pct, description, prices_json, now_str))
 
                 if show_in_order_app:
                     synced_count += 1
+                if show_on_price_list:
+                    synced_price_list_count += 1
 
             # Log sync
             db.execute(f"""
                 INSERT INTO {prefix}sync_log (sync_type, status, records_count, message, created_at)
                 VALUES (%s, %s, %s, %s, %s)
-            """, ("products", "success", synced_count, f"{len(all_products)} producten opgehaald, {synced_count} actief in app", now_str))
+            """, ("products", "success", synced_count, f"{len(all_products)} producten opgehaald, {synced_count} actief in app, {synced_price_list_count} op prijslijsten", now_str))
 
         logger.info(f"Product synchronisatie voltooid: {synced_count} actieve ZWOL bieren/producten opgeslagen.")
         return synced_count

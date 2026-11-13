@@ -26,6 +26,13 @@ document.addEventListener("DOMContentLoaded", () => {
       dropdown.style.display = "none";
     }
   });
+
+  // Sluit controle modal bij Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeOrderConfirmation();
+    }
+  });
 });
 
 // -----------------------------------------------------------------------------
@@ -288,9 +295,11 @@ function updateSubmitButtonLabel() {
 }
 
 // -----------------------------------------------------------------------------
-// Order Opslaan Formulier Verzenden
+// Order Controle & Opslaan Flow
 // -----------------------------------------------------------------------------
-async function submitNewOrder(e) {
+let pendingOrderPayload = null;
+
+function submitNewOrder(e) {
   e.preventDefault();
 
   const customerNumber = document.getElementById("selected-customer-number").value;
@@ -328,42 +337,121 @@ async function submitNewOrder(e) {
     return;
   }
 
-  const submitBtn = document.getElementById("btn-submit-order");
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = `<span>⏳</span> Bezig met opslaan in Silvasoft...`;
+  // Bewaar payload voor definitieve bevestiging
+  pendingOrderPayload = {
+    customer_number: customerNumber,
+    customer_name: customerName,
+    order_date: orderDate,
+    delivery_date: deliveryDate,
+    reference: reference,
+    items: items
+  };
+
+  // Vul gegevens in de controle modal
+  document.getElementById("confirm-customer-name").textContent = customerName;
+  
+  // Format leverdatum naar DD-MM-YYYY
+  let formattedDeliveryDate = deliveryDate;
+  if (deliveryDate && deliveryDate.includes("-")) {
+    const parts = deliveryDate.split("-");
+    if (parts.length === 3) {
+      formattedDeliveryDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+  }
+  document.getElementById("confirm-delivery-date").textContent = formattedDeliveryDate;
+  document.getElementById("confirm-reference").textContent = reference || "-";
+
+  // Artikelenlijst en totaaltelling
+  let totalColli = 0;
+  const tbody = document.getElementById("confirm-items-tbody");
+  tbody.innerHTML = items.map(item => {
+    totalColli += item.quantity;
+    return `
+      <tr>
+        <td style="padding: 10px 4px;">
+          <strong style="color: var(--zwol-text-main); font-size: 0.95rem;">${escapeHtml(item.name)}</strong>
+          ${item.short_name ? `<span style="font-size: 0.8rem; color: #777; margin-left: 6px;">(${escapeHtml(item.short_name)})</span>` : ''}
+        </td>
+        <td style="text-align: right; padding: 10px 4px; font-weight: 700; font-size: 1.05rem;">
+          <span style="background: #f0ede8; padding: 4px 10px; border-radius: 6px; color: var(--zwol-green);">
+            ${item.quantity}x
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("confirm-total-qty").textContent = `${totalColli} ${totalColli === 1 ? 'collo' : 'colli'}`;
+
+  // Reset knop status in de modal
+  const confirmBtn = document.getElementById("btn-confirm-submit");
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = `<span>🚀</span> Definitief opslaan`;
+  }
+
+  // Toon controle modal
+  const modal = document.getElementById("confirm-order-modal");
+  if (modal) {
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeOrderConfirmation(e) {
+  if (e && e.target && e.target.id !== "confirm-order-modal" && !e.target.classList.contains("btn-icon") && !e.target.classList.contains("btn-secondary-action") && !e.target.closest(".btn-secondary-action")) {
+    return;
+  }
+  const modal = document.getElementById("confirm-order-modal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "";
+  }
+}
+
+async function confirmAndSubmitOrder() {
+  if (!pendingOrderPayload) {
+    showToast("Geen ordergegevens gevonden om op te slaan.", "error");
+    closeOrderConfirmation();
+    return;
+  }
+
+  const confirmBtn = document.getElementById("btn-confirm-submit");
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = `<span>⏳</span> Bezig met opslaan in Silvasoft...`;
+  }
 
   try {
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customer_number: customerNumber,
-        customer_name: customerName,
-        order_date: orderDate,
-        delivery_date: deliveryDate,
-        reference: reference,
-        items: items
-      })
+      body: JSON.stringify(pendingOrderPayload)
     });
 
     const data = await res.json();
     if (data.success) {
       const numStr = data.order_number ? ` #${data.order_number}` : "";
       showToast(`🍻 Order${numStr} succesvol aangemaakt in Silvasoft!`, "success");
+      closeOrderConfirmation();
       // Direct doorsturen naar het orders bord
       setTimeout(() => {
         window.location.href = "/";
       }, 700);
     } else {
       showToast(`⚠️ Fout bij aanmaken order: ${data.error || "Onbekende fout"}`, "error");
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = `<span>🛒</span> <span id="btn-submit-label">Order Opslaan in Silvasoft</span>`;
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `<span>🚀</span> Definitief opslaan`;
+      }
     }
   } catch (err) {
     console.error("Fout bij order aanmaken:", err);
     showToast("⚠️ Kon geen verbinding maken met de server.", "error");
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = `<span>🛒</span> <span id="btn-submit-label">Order Opslaan in Silvasoft</span>`;
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = `<span>🚀</span> Definitief opslaan`;
+    }
   }
 }
 

@@ -89,8 +89,77 @@
     </div>
   </form>
 </div>
+
+<!-- Modal voor Order Controle / Bevestiging -->
+<div id="confirm-order-modal" class="modal-backdrop" onclick="closeOrderConfirmation(event)">
+  <div class="bottom-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    
+    <div class="sheet-header">
+      <div>
+        <h2 class="sheet-title">Controleer je Order</h2>
+        <p class="sheet-subtitle">Controleer de aantallen voor je opslaat in Silvasoft</p>
+      </div>
+      <button type="button" class="btn-icon" style="background:#f0ede8; color:#333; border:none;" onclick="closeOrderConfirmation()">✕</button>
+    </div>
+
+    <!-- Klant & Levering overzicht -->
+    <div class="contact-box" style="margin-bottom: 16px;">
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>🏢</span>
+          <strong id="confirm-customer-name">-</strong>
+        </div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>📅</span>
+          <span>Leverdatum: <strong id="confirm-delivery-date" style="color:var(--zwol-green);">-</strong></span>
+        </div>
+      </div>
+      <div class="contact-row">
+        <div class="contact-info">
+          <span>🔖</span>
+          <span>Referentie: <strong id="confirm-reference">-</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Artikelenoverzicht -->
+    <div class="items-breakdown">
+      <h3 style="font-size: 1.05rem; margin-bottom: 8px;">Geselecteerde Bieren & Artikelen</h3>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            <th style="text-align: right; width: 90px;">Aantal</th>
+          </tr>
+        </thead>
+        <tbody id="confirm-items-tbody">
+          <!-- Dynamisch gevuld -->
+        </tbody>
+        <tfoot>
+          <tr style="border-top: 2px solid var(--zwol-green);">
+            <td style="font-weight: 700; padding: 12px 4px;">Totaal aantal colli</td>
+            <td id="confirm-total-qty" style="text-align: right; font-weight: 700; padding: 12px 4px; color: var(--zwol-green); font-size: 1.1rem;">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Actieknoppen: Aanpassen of Definitief opslaan -->
+    <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; margin-top: 20px;">
+      <button type="button" class="btn-secondary-action" onclick="closeOrderConfirmation()">
+        <span>✏️</span> Wijzigen
+      </button>
+      <button type="button" id="btn-confirm-submit" class="btn-primary-action" onclick="confirmAndSubmitOrder()">
+        <span>🚀</span> Definitief opslaan
+      </button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', filename='js/create_order.js') }}"></script>
+<script src="{{ url_for('static', filename='js/create_order.js') }}?v=1.1.0"></script>
 {% endblock %}

@@ -88,6 +88,9 @@ class TestZwolOrdersApp(unittest.TestCase):
         resp = self.client.get("/create")
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Nieuwe Bierorder Invoeren".encode(), resp.data)
+        self.assertIn("confirm-order-modal".encode(), resp.data)
+        self.assertIn("confirm-items-tbody".encode(), resp.data)
+        self.assertIn("btn-confirm-submit".encode(), resp.data)
 
     def test_api_products(self):
         resp = self.client.get("/api/products")

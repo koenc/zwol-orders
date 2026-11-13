@@ -439,20 +439,36 @@
       flex-shrink: 0;
     }
 
+    .condition-box ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
     .condition-box p, .condition-box li {
       font-size: 10px;
       color: #4b5563;
       line-height: 1.35;
     }
 
-    .condition-box ul {
-      list-style-type: none;
+    .condition-box li {
+      position: relative;
+      padding-left: 11px;
+      margin-bottom: 2px;
+    }
+
+    .condition-box li:last-child {
+      margin-bottom: 0;
     }
 
     .condition-box li:before {
-      content: "• ";
+      content: "•";
       color: var(--zwol-gold);
       font-weight: bold;
+      position: absolute;
+      left: 0;
+      top: 0;
+      line-height: inherit;
     }
 
     /* Bottom Bar */

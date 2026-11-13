@@ -325,13 +325,6 @@
       color: #94a3b8;
     }
 
-    .cell-artno {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 10.5px;
-      color: var(--text-muted);
-      width: 55px;
-    }
-
     .cell-name {
       line-height: 1.25;
     }
@@ -650,7 +643,6 @@
           <thead>
             <tr>
               <th class="cell-img"></th>
-              <th style="width: 55px;">Art.nr.</th>
               <th>Bier / Artikel &amp; Omschrijving</th>
               <th class="th-right" style="width: 95px;">Stuksprijs</th>
               <th class="th-right" style="width: 105px;">Prijs excl. btw</th>
@@ -680,7 +672,6 @@
                     </div>
                   {% endif %}
                 </td>
-                <td class="cell-artno">#{{ p.article_number }}</td>
                 <td class="cell-name">
                   <span class="prod-title">{{ p.name }}</span>
                   {% if p.alcohol_pct %}<span class="prod-tag">{{ p.alcohol_pct }}</span>{% endif %}
